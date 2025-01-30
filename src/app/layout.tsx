@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClientLayout } from "@/components/ClientLayout";
+import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -25,8 +26,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+      >
         <ClientLayout>{children}</ClientLayout>
+        <Analytics />
       </body>
     </html>
   );
