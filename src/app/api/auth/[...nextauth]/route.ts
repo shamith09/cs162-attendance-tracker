@@ -40,9 +40,10 @@ const handler = NextAuth({
     ...(process.env.NEXT_PUBLIC_TEST_LOGINS === "true"
       ? [
           CredentialsProvider({
-            name: 'Test Users',
+            id: "credentials",
+            name: "Test Users",
             credentials: {
-              email: { type: 'text' },
+              email: { type: "text" }
             },
             async authorize(credentials) {
               if (!credentials?.email) return null;
@@ -52,6 +53,10 @@ const handler = NextAuth({
         ]
       : []),
   ],
+  pages: {
+    signIn: "/",
+    error: "/error"
+  },
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" || account?.provider === "github") {
@@ -88,7 +93,7 @@ const handler = NextAuth({
     },
     async session({ session }) {
       if (session.user?.email) {
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NEXT_PUBLIC_TEST_LOGINS === "true") {
           const testUser = TEST_USERS[session.user.email as keyof typeof TEST_USERS];
           if (testUser) {
             session.user.isAdmin = testUser.isAdmin;

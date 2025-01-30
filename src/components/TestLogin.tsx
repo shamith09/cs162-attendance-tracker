@@ -15,7 +15,10 @@ export function TestLogin() {
         <Button
           variant="outline"
           className="w-full justify-between bg-background"
-          onClick={() => signIn("credentials", { email: "admin@test.com" })}
+          onClick={() => signIn("credentials", { 
+            email: "admin@test.com",
+            callbackUrl: "/"
+          })}
         >
           <span className="text-foreground">Test Admin</span>
           <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
@@ -25,7 +28,10 @@ export function TestLogin() {
         <Button
           variant="outline"
           className="w-full justify-between bg-background"
-          onClick={() => signIn("credentials", { email: "student@test.com" })}
+          onClick={() => signIn("credentials", { 
+            email: "student@test.com",
+            callbackUrl: "/"
+          })}
         >
           <span className="text-foreground">Test Student</span>
           <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
