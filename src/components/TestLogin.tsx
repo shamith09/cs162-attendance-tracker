@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 export function TestLogin() {
-  if (process.env.NODE_ENV !== "development") return null;
+  if (process.env.NEXT_PUBLIC_TEST_LOGINS !== "true") return null;
 
   return (
     <div className="space-y-2">
