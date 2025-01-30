@@ -3,17 +3,19 @@ import mysql from 'mysql2/promise';
 const pool = mysql.createPool(
   process.env.NODE_ENV === 'production' 
     ? {
-        host: process.env.MYSQL_PUBLIC_URL?.split('@')[1]?.split(':')[0],
+        host: process.env.MYSQLHOST,
         port: Number(process.env.MYSQLPORT),
         user: process.env.MYSQLUSER,
         password: process.env.MYSQL_ROOT_PASSWORD,
-        database: process.env.MYSQLDATABASE,
+        database: process.env.MYSQL_DATABASE,
         ssl: {
           rejectUnauthorized: true
         },
         waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
+        connectionLimit: 5,
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 0
       }
     : {
         socketPath: '/tmp/mysql.sock',
@@ -21,7 +23,7 @@ const pool = mysql.createPool(
         password: process.env.MYSQL_ROOT_PASSWORD,
         database: process.env.MYSQLDATABASE,
         waitForConnections: true,
-        connectionLimit: 10,
+        connectionLimit: 5,
         queueLimit: 0
       }
 );
