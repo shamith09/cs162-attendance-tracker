@@ -8,6 +8,8 @@ import { TestLogin } from "@/components/TestLogin";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function MarkAttendance({
   params,
@@ -68,7 +70,9 @@ export default function MarkAttendance({
 
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error || "Failed to mark attendance. Please try again.");
+          setError(
+            data.error || "Failed to mark attendance. Please try again."
+          );
         } else if (data.success) {
           router.push("/success");
         } else {
@@ -96,11 +100,25 @@ export default function MarkAttendance({
   if (!session) {
     return (
       <div className="grid min-h-screen bg-background">
-        <div className="flex flex-col gap-4 p-6 md:p-10">
-          <div className="flex items-center gap-2 font-medium text-foreground">
-            <Image src="/logo.png" alt="CS 162 Logo" width={24} height={24} className="h-6 w-auto" />
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <div className="absolute top-6 left-6 flex gap-2 w-[120px] justify-center z-40">
+          <Link
+            href="/"
+            className="flex items-center gap-2 hover:opacity-80 font-medium text-foreground"
+          >
+            <Image
+              src="/logo.png"
+              alt="CS 162 Logo"
+              width={24}
+              height={24}
+              className="h-6 w-auto"
+            />
             CS 162 Attendance
-          </div>
+          </Link>
+        </div>
+        <div className="flex flex-col gap-4 p-6 md:p-10">
           <div className="flex flex-1 items-center justify-center">
             <div className="w-full max-w-sm space-y-6">
               <div className="flex flex-col space-y-2 text-center">
@@ -116,7 +134,9 @@ export default function MarkAttendance({
                   <Button
                     variant="outline"
                     className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
-                    onClick={() => signIn("google", { callbackUrl: `/mark/${code}` })}
+                    onClick={() =>
+                      signIn("google", { callbackUrl: `/mark/${code}` })
+                    }
                   >
                     <Image
                       src="https://authjs.dev/img/providers/google.svg"
@@ -129,7 +149,9 @@ export default function MarkAttendance({
                   <Button
                     variant="outline"
                     className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
-                    onClick={() => signIn("github", { callbackUrl: `/mark/${code}` })}
+                    onClick={() =>
+                      signIn("github", { callbackUrl: `/mark/${code}` })
+                    }
                   >
                     <Image
                       src="https://authjs.dev/img/providers/github.svg"
@@ -166,11 +188,25 @@ export default function MarkAttendance({
 
   return (
     <div className="grid min-h-screen bg-background">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex items-center gap-2 font-medium text-foreground">
-          <Image src="/logo.png" alt="CS 162 Logo" width={24} height={24} className="h-6 w-auto" />
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="absolute top-6 left-6 flex gap-2 w-[120px] justify-center z-40">
+        <Link
+          href="/"
+          className="flex items-center gap-2 hover:opacity-80 font-medium text-foreground"
+        >
+          <Image
+            src="/logo.png"
+            alt="CS 162 Logo"
+            width={24}
+            height={24}
+            className="h-6 w-auto"
+          />
           CS 162 Attendance
-        </div>
+        </Link>
+      </div>
+      <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-sm space-y-6">
             <div className="flex flex-col space-y-2 text-center">
@@ -195,4 +231,4 @@ export default function MarkAttendance({
       </div>
     </div>
   );
-} 
+}

@@ -76,19 +76,22 @@ export default function Home() {
           <LogoutButton />
           <ThemeToggle />
         </div>
+        <div className="absolute top-6 left-6 flex gap-2 w-[120px] justify-center z-40">
+          <Link
+            href="/"
+            className="flex items-center gap-2 hover:opacity-80 font-medium text-foreground"
+          >
+            <Image
+              src="/logo.png"
+              alt="CS 162 Logo"
+              width={24}
+              height={24}
+              className="h-6 w-auto"
+            />
+            CS 162 Attendance
+          </Link>
+        </div>
         <div className="flex flex-col gap-4 p-6 md:p-10">
-          <div className="flex items-center gap-2 font-medium text-foreground">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80">
-              <Image
-                src="/logo.png"
-                alt="CS 162 Logo"
-                width={24}
-                height={24}
-                className="h-6 w-auto"
-              />
-              CS 162 Attendance
-            </Link>
-          </div>
           <div className="flex flex-1 items-center justify-center">
             <div className="w-full max-w-sm space-y-6">
               <div className="flex flex-col space-y-2 text-center">
@@ -166,19 +169,22 @@ export default function Home() {
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
+      <div className="absolute top-6 left-6 flex gap-2 justify-center z-40">
+        <Link
+          href="/"
+          className="flex items-center gap-2 hover:opacity-80 font-medium text-foreground"
+        >
+          <Image
+            src="/logo.png"
+            alt="CS 162 Logo"
+            width={24}
+            height={24}
+            className="h-6 w-auto"
+          />
+          CS 162 Attendance
+        </Link>
+      </div>
       <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex items-center gap-2 font-medium text-foreground">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80">
-            <Image
-              src="/logo.png"
-              alt="CS 162 Logo"
-              width={24}
-              height={24}
-              className="h-6 w-auto"
-            />
-            CS 162 Attendance
-          </Link>
-        </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-sm space-y-6">
             <div className="flex flex-col space-y-2 text-center">
@@ -222,7 +228,7 @@ export default function Home() {
                     Sign in with GitHub
                   </span>
                 </Button>
-                {process.env.NODE_ENV === "development" && (
+                {process.env.TEST_LOGIN === "true" && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
