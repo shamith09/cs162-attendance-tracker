@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { GET as authOptions } from "@/app/api/auth/[...nextauth]/route";
 import pool from "@/lib/db";
 import { RowDataPacket } from "mysql2";
-import { Session } from "next-auth";
 
 export async function GET() {
-  const session = (await getServerSession(authOptions)) as Session & {
-    user?: { isAdmin?: boolean };
-  };
-  if (!session?.user?.isAdmin) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  const session = await getServerSession();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const connection = await pool.getConnection();
   try {
+    const [[user]] = await connection.execute<RowDataPacket[]>(
+      "SELECT is_admin FROM users WHERE email = ?",
+      [session.user.email]
+    );
+
+    if (!user?.is_admin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Get total sessions
     const [sessionRows] = await connection.execute<RowDataPacket[]>(
       "SELECT COUNT(*) as count FROM sessions"
@@ -32,7 +37,7 @@ export async function GET() {
       `SELECT 
         COUNT(DISTINCT user_id) as student_count,
         session_id
-      FROM attendances
+      FROM attendance_records
       GROUP BY session_id`
     );
 
@@ -52,7 +57,7 @@ export async function GET() {
         s.name,
         COUNT(DISTINCT a.user_id) as attendance_count
       FROM sessions s
-      LEFT JOIN attendances a ON s.id = a.session_id
+      LEFT JOIN attendance_records a ON s.id = a.session_id
       GROUP BY s.id, s.name
       ORDER BY s.created_at DESC
       LIMIT 7`
