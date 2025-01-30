@@ -13,8 +13,10 @@ interface SessionRecord extends RowDataPacket {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   const session = await getServerSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,7 +33,7 @@ export async function GET(
 
   const [[sessionData]] = await pool.execute<SessionRecord[]>(
     "SELECT * FROM sessions WHERE id = ?",
-    [params.id]
+    [id]
   );
 
   if (!sessionData) {
@@ -42,7 +44,7 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -75,7 +77,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;

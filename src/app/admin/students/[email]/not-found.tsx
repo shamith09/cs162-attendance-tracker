@@ -55,7 +55,7 @@ export default function StudentNotFound() {
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <p className="text-muted-foreground">
-                The student you're looking for could not be found. They may not have attended any sessions yet.
+                The student you&apos;re looking for could not be found. They may not have attended any sessions yet.
               </p>
             </div>
           </CardContent>
