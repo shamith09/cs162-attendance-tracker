@@ -3,7 +3,7 @@ import mysql from 'mysql2/promise';
 const pool = mysql.createPool({
   ...(process.env.NODE_ENV === 'production' 
     ? {
-        host: process.env.MYSQL_URL?.split('@')[1]?.split(':')[0],
+        host: process.env.MYSQL_PUBLIC_URL?.split('@')[1]?.split(':')[0],
         port: Number(process.env.MYSQLPORT),
       }
     : {
