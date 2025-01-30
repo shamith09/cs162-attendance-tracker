@@ -41,17 +41,23 @@ export async function GET(req: NextRequest) {
     const expirationSeconds = sessionData.expiration_seconds;
     const id = uuidv4();
     const code = uuidv4();
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + expirationSeconds * 1000);
-
+    
+    // Store expiration time using MySQL's timezone functions
     await connection.execute(
-      "INSERT INTO attendance_codes (id, session_id, code, expires_at) VALUES (?, ?, ?, ?)",
-      [id, sessionId, code, expiresAt.toISOString().slice(0, 19).replace("T", " ")]
+      `INSERT INTO attendance_codes (id, session_id, code, expires_at) 
+       VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ? SECOND))`,
+      [id, sessionId, code, expirationSeconds]
+    );
+
+    // Get the stored expiration time
+    const [[codeData]] = await connection.execute<(RowDataPacket & { expires_at: string })[]>(
+      `SELECT expires_at FROM attendance_codes WHERE id = ?`,
+      [id]
     );
 
     return NextResponse.json({ 
       code,
-      expiresAt: expiresAt.toISOString()
+      expiresAt: codeData.expires_at
     });
   } finally {
     connection.release();

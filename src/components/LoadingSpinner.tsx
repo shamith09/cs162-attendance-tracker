@@ -8,14 +8,14 @@ interface LoadingSpinnerProps {
 
 export function LoadingSpinner({ text = "Loading..." }: LoadingSpinnerProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
+    <div className="flex items-center gap-2">
       <PulseLoader
         color="currentColor"
-        size={10}
-        margin={4}
+        size={6}
+        margin={2}
         speedMultiplier={0.75}
       />
-      <p className="text-sm">{text}</p>
+      <span className="text-sm">{text}</span>
     </div>
   );
 } 

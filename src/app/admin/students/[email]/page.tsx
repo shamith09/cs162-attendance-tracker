@@ -12,18 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Home } from "lucide-react";
 
 interface StudentAttendance {
   session_name: string;
@@ -36,11 +26,7 @@ interface AttendanceStats {
   attendedSessions: number;
   attendanceRate: number;
   averageArrivalMinutes: number;
-  attendanceByWeekday: { name: string; count: number }[];
-  attendanceTimeline: { date: string; attended: number }[];
 }
-
-const COLORS = ['#0088FE', '#FF8042'];
 
 export default function StudentDetails({
   params,
@@ -108,11 +94,29 @@ export default function StudentDetails({
     <div className="min-h-screen bg-background">
       <ThemeToggle />
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">
+                <Home className="h-4 w-4" />
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/admin">Admin Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Student Details</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <div className="flex justify-between items-center mb-8 mt-4">
           <div className="flex items-center gap-4">
             <Image
               src="/logo.png"
-              alt="CS162 Logo"
+              alt="CS 162 Logo"
               width={40}
               height={40}
             />
@@ -130,36 +134,13 @@ export default function StudentDetails({
         </div>
 
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Attendance Overview</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Attended', value: stats.attendedSessions },
-                          { name: 'Missed', value: stats.totalSessions - stats.attendedSessions }
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {COLORS.map((color, index) => (
-                          <Cell key={`cell-${index}`} fill={color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="text-center mt-4">
+              <CardContent className="min-h-[300px] flex items-center justify-center">
+                <div className="text-center">
                   <p className="text-3xl font-bold">
                     {Math.round(stats.attendanceRate * 100)}%
                   </p>
@@ -174,92 +155,47 @@ export default function StudentDetails({
                       {stats.totalSessions - stats.attendedSessions} Missed
                     </Badge>
                   </div>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    Average arrival time: {stats.averageArrivalMinutes} minutes after start
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Attendance by Day</CardTitle>
+                <CardTitle>Attendance History</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={stats.attendanceByWeekday}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line 
-                        type="monotone" 
-                        dataKey="count" 
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Attendance Timeline</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={stats.attendanceTimeline}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line 
-                        type="monotone" 
-                        dataKey="attended" 
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                <ScrollArea className="h-[300px] pr-4">
+                  <div className="space-y-4">
+                    {attendanceHistory.map((record, i) => (
+                      <div key={i}>
+                        <div className="flex justify-between items-start py-3">
+                          <div>
+                            <p className="font-medium">{record.session_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(record.session_date).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">
+                              {new Date(record.timestamp).toLocaleTimeString()}
+                            </Badge>
+                          </div>
+                        </div>
+                        {i < attendanceHistory.length - 1 && <Separator />}
+                      </div>
+                    ))}
+                    {attendanceHistory.length === 0 && (
+                      <p className="text-center text-muted-foreground">No attendance records found.</p>
+                    )}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           </div>
         )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Attendance History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="space-y-4">
-                {attendanceHistory.map((record, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between items-start py-3">
-                      <div>
-                        <p className="font-medium">{record.session_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(record.session_date).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">
-                          {new Date(record.timestamp).toLocaleTimeString()}
-                        </Badge>
-                      </div>
-                    </div>
-                    {i < attendanceHistory.length - 1 && <Separator />}
-                  </div>
-                ))}
-                {attendanceHistory.length === 0 && (
-                  <p className="text-center text-muted-foreground">No attendance records found.</p>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

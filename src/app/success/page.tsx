@@ -5,8 +5,8 @@ export default function SuccessPage() {
     <div className="grid min-h-screen bg-background">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex items-center gap-2 font-medium text-foreground">
-          <Image src="/logo.png" alt="CS162 Logo" width={24} height={24} className="h-6 w-auto" />
-          CS162 Attendance
+          <Image src="/logo.png" alt="CS 162 Logo" width={24} height={24} className="h-6 w-auto" />
+          CS 162 Attendance
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-sm space-y-6">

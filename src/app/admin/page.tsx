@@ -27,7 +27,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Home, Trash2, Edit2, MoreHorizontal, X, Maximize2 } from "lucide-react";
+import {
+  Home,
+  Trash2,
+  Edit2,
+  MoreHorizontal,
+  X,
+  Maximize2,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -47,6 +54,15 @@ import {
 } from "@/components/ui/dialog";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import {
+  Bar,
+  BarChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface Session {
   id: string;
@@ -60,6 +76,13 @@ interface Attendance {
   user_name: string;
   user_email: string;
   timestamp: string;
+}
+
+interface Analytics {
+  totalSessions: number;
+  totalStudents: number;
+  averageAttendance: number;
+  attendanceOverTime: { name: string; attendance: number }[];
 }
 
 function getRemainingTimePercentage(
@@ -94,10 +117,18 @@ export default function AdminDashboard() {
   const [qrCode, setQrCode] = useState("");
   const [codeExpiry, setCodeExpiry] = useState<Date | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
-  const [renameSession, setRenameSession] = useState<{ id: string; name: string } | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{ ids: string[] } | null>(null);
+  const [selectedSessions, setSelectedSessions] = useState<Set<string>>(
+    new Set()
+  );
+  const [renameSession, setRenameSession] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    ids: string[];
+  } | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -111,7 +142,9 @@ export default function AdminDashboard() {
       // Fetch QR code
       const fetchCode = async () => {
         try {
-          const codeRes = await fetch("/api/code?sessionId=" + currentSession.id);
+          const codeRes = await fetch(
+            "/api/code?sessionId=" + currentSession.id
+          );
           if (codeRes.ok) {
             const codeData = await codeRes.json();
             const url = `${window.location.origin}/mark/${codeData.code}`;
@@ -126,12 +159,17 @@ export default function AdminDashboard() {
       // Initial QR code fetch
       fetchCode();
       // Poll QR code based on expiration time
-      const codeInterval = setInterval(fetchCode, currentSession.expiration_seconds * 1000);
+      const codeInterval = setInterval(
+        fetchCode,
+        currentSession.expiration_seconds * 1000
+      );
 
       // Fetch attendees
       const fetchAttendees = async () => {
         try {
-          const attendeesRes = await fetch("/api/attendance?sessionId=" + currentSession.id);
+          const attendeesRes = await fetch(
+            "/api/attendance?sessionId=" + currentSession.id
+          );
           if (attendeesRes.ok) {
             const attendeesData = await attendeesRes.json();
             setAttendees(attendeesData.attendees);
@@ -203,6 +241,21 @@ export default function AdminDashboard() {
     };
     fetchSessions();
   }, []);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await fetch("/api/analytics");
+        if (res.ok) {
+          const data = await res.json();
+          setAnalytics(data);
+        }
+      } catch (error) {
+        console.error("Error fetching analytics:", error);
+      }
+    };
+    fetchAnalytics();
+  }, [pastSessions]);
 
   const startSession = async () => {
     if (!sessionName) return;
@@ -350,6 +403,9 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 h-screen">
           <div className="flex flex-col items-center justify-center p-8 border-r">
             <div className="flex flex-col items-center gap-8">
+              <p className="text-4xl font-bold text-foreground">
+                {qrCode.split("/").pop()?.slice(-6).toUpperCase()}
+              </p>
               <QRCodeSVG
                 value={qrCode}
                 size={500}
@@ -365,8 +421,12 @@ export default function AdminDashboard() {
                     text={formatRemainingTime(codeExpiry)}
                     styles={buildStyles({
                       textSize: "20px",
-                      pathColor: isFlashing ? "rgb(239, 68, 68)" : "hsl(var(--primary))",
-                      textColor: isFlashing ? "rgb(239, 68, 68)" : "currentColor",
+                      pathColor: isFlashing
+                        ? "rgb(239, 68, 68)"
+                        : "hsl(var(--primary))",
+                      textColor: isFlashing
+                        ? "rgb(239, 68, 68)"
+                        : "currentColor",
                       trailColor: "hsl(var(--muted))",
                       strokeLinecap: "round",
                       pathTransitionDuration: 0.5,
@@ -378,7 +438,10 @@ export default function AdminDashboard() {
           </div>
           <div className="p-8 overflow-hidden">
             <h2 className="text-2xl font-bold mb-4">Current Attendees</h2>
-            <AttendanceTable data={attendees} className="h-[calc(100vh-8rem)]" />
+            <AttendanceTable
+              data={attendees}
+              className="h-[calc(100vh-8rem)]"
+            />
           </div>
         </div>
       </div>
@@ -406,7 +469,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-4">
             <Image
               src="/logo.png"
-              alt="CS162 Logo"
+              alt="CS 162 Logo"
               width={40}
               height={40}
               className="h-10 w-auto"
@@ -437,10 +500,14 @@ export default function AdminDashboard() {
               <div className="space-y-4">
                 <div className="flex gap-3">
                   <Input
-                    type="text"
+                    placeholder="Enter session name"
                     value={sessionName}
                     onChange={(e) => setSessionName(e.target.value)}
-                    placeholder="Enter session name"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        startSession();
+                      }
+                    }}
                   />
                   <Button onClick={startSession}>Start</Button>
                 </div>
@@ -482,18 +549,23 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 gap-6 mb-8">
             <Card>
               <CardHeader>
-                <CardTitle>{currentSession.name} QR Code</CardTitle>
+                <CardTitle>{currentSession.name}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="bg-card p-4 rounded-md space-y-8">
                   {qrCode && (
                     <>
                       <div className="flex items-center justify-between">
-                        <QRCodeSVG
-                          value={qrCode}
-                          size={200}
-                          className="bg-white dark:bg-black p-2 rounded-lg"
-                        />
+                        <div className="flex flex-col items-center gap-3">
+                          <p className="font-mono text-2xl font-bold text-foreground">
+                            {qrCode.split("/").pop()?.slice(-6).toUpperCase()}
+                          </p>
+                          <QRCodeSVG
+                            value={qrCode}
+                            size={200}
+                            className="bg-white dark:bg-black p-2 rounded-lg"
+                          />
+                        </div>
                         {codeExpiry && (
                           <div className="flex flex-col items-center gap-2">
                             <div className="w-32 h-32">
@@ -651,6 +723,86 @@ export default function AdminDashboard() {
             </Table>
           </CardContent>
         </Card>
+
+        {analytics && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Overall Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Sessions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {analytics.totalSessions}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Students
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {analytics.totalStudents}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Average Attendance
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {analytics.averageAttendance} students
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-lg font-medium mb-4">Attendance Trend</h3>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={analytics.attendanceOverTime}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(value: number) => [
+                          `${value} students`,
+                          "Attendance",
+                        ]}
+                      />
+                      <Bar
+                        dataKey="attendance"
+                        fill="#3b82f6"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Dialog
           open={!!renameSession}

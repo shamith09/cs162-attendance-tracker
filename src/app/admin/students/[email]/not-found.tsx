@@ -37,7 +37,7 @@ export default function StudentNotFound() {
           <div className="flex items-center gap-4">
             <Image
               src="/logo.png"
-              alt="CS162 Logo"
+              alt="CS 162 Logo"
               width={40}
               height={40}
             />
