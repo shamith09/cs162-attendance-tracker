@@ -228,7 +228,7 @@ export default function Home() {
                     Sign in with GitHub
                   </span>
                 </Button>
-                {process.env.TEST_LOGIN === "true" && (
+                {process.env.NEXT_PUBLIC_TEST_LOGINS && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
