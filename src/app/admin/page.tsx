@@ -63,6 +63,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { AdminManagement } from "@/components/AdminManagement";
 
 interface Session {
   id: string;
@@ -492,7 +493,7 @@ export default function AdminDashboard() {
         </div>
 
         {!currentSession ? (
-          <Card>
+          <Card className="mb-8">
             <CardHeader>
               <CardTitle>Start New Session</CardTitle>
             </CardHeader>
@@ -725,9 +726,9 @@ export default function AdminDashboard() {
         </Card>
 
         {analytics && (
-          <Card className="mt-8">
+          <Card className="mt-8 mb-8">
             <CardHeader>
-              <CardTitle>Overall Analytics</CardTitle>
+              <CardTitle>Overall Analytics (experimental)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -803,6 +804,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         )}
+
+        <AdminManagement />
 
         <Dialog
           open={!!renameSession}
