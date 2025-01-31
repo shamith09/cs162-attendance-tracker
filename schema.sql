@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_by VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   ended_at TIMESTAMP NULL,
-  expiration_minutes INT DEFAULT 5,
+  expiration_seconds INT DEFAULT 300,
   FOREIGN KEY (created_by) REFERENCES users(id)
 );
 

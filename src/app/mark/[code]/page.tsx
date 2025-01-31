@@ -103,7 +103,7 @@ export default function MarkAttendance({
         <div className="absolute top-4 right-4">
           <ThemeToggle />
         </div>
-        <div className="absolute top-6 left-6 flex gap-2 w-[120px] justify-center z-40">
+        <div className="absolute top-6 left-6 flex gap-2 justify-center z-40">
           <Link
             href="/"
             className="flex items-center gap-2 hover:opacity-80 font-medium text-foreground"
@@ -191,7 +191,7 @@ export default function MarkAttendance({
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      <div className="absolute top-6 left-6 flex gap-2 w-[120px] justify-center z-40">
+      <div className="absolute top-6 left-6 flex gap-2 justify-center z-40">
         <Link
           href="/"
           className="flex items-center gap-2 hover:opacity-80 font-medium text-foreground"
