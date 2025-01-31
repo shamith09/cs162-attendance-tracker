@@ -61,7 +61,7 @@ export function DynamicQRCode({
     <div ref={containerRef} className="w-full h-full flex items-center justify-center">
       <div className={`flex ${layout === "row" ? "flex-row" : "flex-col"} items-center gap-8`}>
         <div className="flex flex-col items-center gap-4">
-          <p className="text-4xl font-bold text-foreground">
+          <p className="text-4xl font-mono font-bold text-foreground">
             {code.split("/").pop()?.slice(-6).toUpperCase()}
           </p>
           <QRCodeSVG
