@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       const id = uuidv4();
       await connection.execute(
         "INSERT INTO users (id, email, name, is_admin) VALUES (?, ?, ?, TRUE)",
-        [id, email, name, true]
+        [id, email, name]
       );
     }
 
@@ -122,4 +122,4 @@ export async function DELETE(request: Request) {
   } finally {
     connection.release();
   }
-} 
+}

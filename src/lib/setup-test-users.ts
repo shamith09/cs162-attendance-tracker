@@ -10,10 +10,10 @@ async function setupTestUsers() {
 
   try {
     await connection.query(`
-      INSERT INTO users (id, name, email, is_admin)
+      INSERT INTO users (id, email, name, is_admin)
       VALUES 
-        (UUID(), 'Test Admin', 'admin@test.com', TRUE),
-        (UUID(), 'Test Student', 'student@test.com', FALSE)
+        (UUID(), 'admin@test.com', 'Test Admin', TRUE),
+        (UUID(), 'student@test.com', 'Test Student', FALSE)
       ON DUPLICATE KEY UPDATE
         name = VALUES(name),
         is_admin = VALUES(is_admin);
