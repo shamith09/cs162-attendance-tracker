@@ -33,4 +33,11 @@ CREATE TABLE IF NOT EXISTS attendance_records (
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (code_id) REFERENCES attendance_codes(id),
   FOREIGN KEY (session_id) REFERENCES sessions(id)
-); 
+);
+
+CREATE TABLE IF NOT EXISTS code_validations (
+  id VARCHAR(36) PRIMARY KEY,
+  code_id VARCHAR(36) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  FOREIGN KEY (code_id) REFERENCES attendance_codes(id)
+);

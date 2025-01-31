@@ -211,12 +211,12 @@ export default function MarkAttendance({
           <div className="w-full max-w-sm space-y-6">
             <div className="flex flex-col space-y-2 text-center">
               {isMarking ? (
-                <>
+                <div className="flex flex-col gap-2 items-center">
                   <h1 className="text-2xl font-semibold tracking-tight text-foreground">
                     Marking Attendance...
                   </h1>
                   <LoadingSpinner />
-                </>
+                </div>
               ) : error ? (
                 <>
                   <h1 className="text-2xl font-semibold tracking-tight text-destructive">

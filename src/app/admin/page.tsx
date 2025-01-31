@@ -64,6 +64,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { AdminManagement } from "@/components/AdminManagement";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { DynamicQRCode } from "@/components/DynamicQRCode";
 
 interface Session {
   id: string;
@@ -401,50 +407,26 @@ export default function AdminDashboard() {
         >
           <X className="h-6 w-6" />
         </Button>
-        <div className="grid grid-cols-2 h-screen">
-          <div className="flex flex-col items-center justify-center p-8 border-r">
-            <div className="flex flex-col items-center gap-8">
-              <p className="text-4xl font-bold text-foreground">
-                {qrCode.split("/").pop()?.slice(-6).toUpperCase()}
-              </p>
-              <QRCodeSVG
-                value={qrCode}
-                size={500}
-                className="bg-white dark:bg-black p-4 rounded-lg"
-              />
-              {codeExpiry && (
-                <div className="w-40 h-40">
-                  <CircularProgressbar
-                    value={getRemainingTimePercentage(
-                      codeExpiry,
-                      currentSession.expiration_seconds * 1000
-                    )}
-                    text={formatRemainingTime(codeExpiry)}
-                    styles={buildStyles({
-                      textSize: "20px",
-                      pathColor: isFlashing
-                        ? "rgb(239, 68, 68)"
-                        : "hsl(var(--primary))",
-                      textColor: isFlashing
-                        ? "rgb(239, 68, 68)"
-                        : "currentColor",
-                      trailColor: "hsl(var(--muted))",
-                      strokeLinecap: "round",
-                      pathTransitionDuration: 0.5,
-                    })}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="p-8 overflow-hidden">
-            <h2 className="text-2xl font-bold mb-4">Current Attendees</h2>
-            <AttendanceTable
-              data={attendees}
-              className="h-[calc(100vh-8rem)]"
+        <ResizablePanelGroup direction="horizontal">
+          <ResizablePanel defaultSize={60} minSize={40}>
+            <DynamicQRCode
+              code={qrCode}
+              codeExpiry={codeExpiry}
+              isFlashing={isFlashing}
+              expirationSeconds={currentSession.expiration_seconds}
             />
-          </div>
-        </div>
+          </ResizablePanel>
+          <ResizableHandle />
+          <ResizablePanel defaultSize={40} minSize={30}>
+            <div className="p-8 h-screen overflow-hidden">
+              <h2 className="text-2xl font-bold mb-4">Current Attendees</h2>
+              <AttendanceTable
+                data={attendees}
+                className="h-[calc(100vh-8rem)]"
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     );
   }
