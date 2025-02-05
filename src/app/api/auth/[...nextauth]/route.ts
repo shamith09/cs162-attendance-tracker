@@ -12,6 +12,12 @@ const TEST_USERS = {
     email: 'admin@test.com',
     isAdmin: true,
   },
+  'admin2@test.com': {
+    id: 'test-admin2',
+    name: 'Test Admin 2',
+    email: 'admin2@test.com',
+    isAdmin: true,
+  },
   'student@test.com': {
     id: 'test-student',
     name: 'Test Student',

@@ -30,20 +30,12 @@ import {
 import {
   Home,
   Trash2,
-  Edit2,
-  MoreHorizontal,
   X,
   Maximize2,
+  Eye,
+  StopCircle,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -70,6 +62,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { DynamicQRCode } from "@/components/DynamicQRCode";
+import { Badge } from "@/components/ui/badge";
 
 interface Session {
   id: string;
@@ -77,6 +70,8 @@ interface Session {
   created_at: string;
   ended_at: string | null;
   expiration_seconds: number;
+  creator_name: string;
+  creator_email: string;
 }
 
 interface Attendance {
@@ -124,9 +119,7 @@ export default function AdminDashboard() {
   const [qrCode, setQrCode] = useState("");
   const [codeExpiry, setCodeExpiry] = useState<Date | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedSessions, setSelectedSessions] = useState<Set<string>>(
-    new Set()
-  );
+  const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [renameSession, setRenameSession] = useState<{
     id: string;
     name: string;
@@ -236,10 +229,14 @@ export default function AdminDashboard() {
         const data = await res.json();
         setPastSessions(data.sessions || []);
 
-        // Find any active session (no ended_at date)
-        const activeSession = data.sessions?.find((s: Session) => !s.ended_at);
+        // Find any active session created by current admin (no ended_at date)
+        const activeSession = data.sessions?.find(
+          (s: Session) => !s.ended_at && s.creator_email === session?.user?.email
+        );
         if (activeSession) {
           setCurrentSession(activeSession);
+        } else {
+          setCurrentSession(null);
         }
       } catch (error) {
         console.error("Error fetching sessions:", error);
@@ -247,7 +244,7 @@ export default function AdminDashboard() {
       }
     };
     fetchSessions();
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -281,32 +278,48 @@ export default function AdminDashboard() {
 
     if (isNaN(expirationSeconds) || expirationSeconds <= 0) return;
 
-    const res = await fetch("/api/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: sessionName,
-        expirationSeconds: Number(expirationSeconds),
-      }),
-    });
-    const data = await res.json();
-    setCurrentSession(data);
-    setPastSessions((prev) => [data, ...prev]);
-    setSessionName("");
+    try {
+      await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: sessionName,
+          expirationSeconds: Number(expirationSeconds),
+        }),
+      });
+
+      // Fetch fresh session data to get creator info
+      const sessionsRes = await fetch("/api/sessions");
+      const { sessions } = await sessionsRes.json();
+      setPastSessions(sessions);
+
+      // Find and set the current session
+      const newSession = sessions.find((s: Session) => !s.ended_at);
+      if (newSession) {
+        setCurrentSession(newSession);
+      }
+
+      setSessionName("");
+    } catch (error) {
+      console.error("Error starting session:", error);
+    }
   };
 
   const endSession = async () => {
     if (!currentSession) return;
-    const res = await fetch("/api/sessions/" + currentSession.id, {
-      method: "PUT",
-    });
-    const updatedSession = await res.json();
-    setCurrentSession(null);
-    setPastSessions((prev) =>
-      prev.map((session) =>
-        session.id === updatedSession.id ? updatedSession : session
-      )
-    );
+    try {
+      await fetch("/api/sessions/" + currentSession.id, {
+        method: "PUT",
+      });
+
+      // Fetch fresh session data to get updated info
+      const sessionsRes = await fetch("/api/sessions");
+      const { sessions } = await sessionsRes.json();
+      setPastSessions(sessions);
+      setCurrentSession(null);
+    } catch (error) {
+      console.error("Error ending session:", error);
+    }
   };
 
   const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
@@ -316,9 +329,9 @@ export default function AdminDashboard() {
 
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
-      setSelectedSessions(new Set(pastSessions.map((s) => s.id)));
+      setSelectedSessions(pastSessions.map((s) => s.id));
     } else {
-      setSelectedSessions(new Set());
+      setSelectedSessions([]);
     }
   };
 
@@ -326,13 +339,11 @@ export default function AdminDashboard() {
     sessionId: string,
     checked: boolean | "indeterminate"
   ) => {
-    const newSelected = new Set(selectedSessions);
-    if (checked === true) {
-      newSelected.add(sessionId);
+    if (checked) {
+      setSelectedSessions([...selectedSessions, sessionId]);
     } else {
-      newSelected.delete(sessionId);
+      setSelectedSessions(selectedSessions.filter((id) => id !== sessionId));
     }
-    setSelectedSessions(newSelected);
   };
 
   const deleteSelected = () => {
@@ -371,7 +382,7 @@ export default function AdminDashboard() {
       setPastSessions((sessions) =>
         sessions.filter((s) => !deleteConfirmation.ids.includes(s.id))
       );
-      setSelectedSessions(new Set());
+      setSelectedSessions([]);
 
       // Clear current session if it's being deleted
       if (
@@ -602,13 +613,13 @@ export default function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Session History</CardTitle>
             <div className="w-[140px] flex justify-end">
-              {selectedSessions.size > 0 && (
+              {selectedSessions.length > 0 && (
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={deleteSelected}
                 >
-                  Delete Selected ({selectedSessions.size})
+                  Delete Selected ({selectedSessions.length})
                 </Button>
               )}
             </div>
@@ -617,88 +628,71 @@ export default function AdminDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">
+                  <TableHead className="w-[30px]">
                     <Checkbox
-                      checked={selectedSessions.size === pastSessions.length}
+                      checked={selectedSessions.length === pastSessions.length}
                       onCheckedChange={handleSelectAll}
                       aria-label="Select all"
                     />
                   </TableHead>
-                  <TableHead>Session Name</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Created By</TableHead>
+                  <TableHead>Created At</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pastSessions.map((session) => (
-                  <TableRow key={session.id}>
+                {pastSessions.map((s) => (
+                  <TableRow key={s.id}>
                     <TableCell>
                       <Checkbox
-                        checked={selectedSessions.has(session.id)}
+                        checked={selectedSessions.includes(s.id)}
                         onCheckedChange={(checked) =>
-                          handleSelectOne(session.id, checked)
+                          handleSelectOne(s.id, checked)
                         }
-                        aria-label={`Select ${session.name}`}
+                        aria-label={`Select ${s.name}`}
                       />
                     </TableCell>
-                    <TableCell
-                      className="font-medium cursor-pointer"
-                      onClick={() =>
-                        router.push(`/admin/sessions/${session.id}`)
-                      }
-                    >
-                      {session.name}
+                    <TableCell>{s.name}</TableCell>
+                    <TableCell>{s.creator_name || s.creator_email}</TableCell>
+                    <TableCell>
+                      {new Date(s.created_at).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      {new Date(session.created_at).toLocaleDateString()}{" "}
-                      {new Date(session.created_at).toLocaleTimeString()}
-                    </TableCell>
-                    <TableCell>
-                      {session.ended_at ? (
-                        <span className="text-xs px-2 py-1 bg-red-500/30 text-red-300 dark:text-red-400 rounded-full">
-                          Ended
-                        </span>
+                      {s.ended_at ? (
+                        <Badge variant="outline">Ended</Badge>
                       ) : (
-                        <span className="text-xs px-2 py-1 bg-green-500/30 text-green-300 dark:text-green-400 rounded-full">
-                          Active
-                        </span>
+                        <Badge>Active</Badge>
                       )}
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setRenameSession({
-                                id: session.id,
-                                name: session.name,
-                              })
-                            }
-                          >
-                            <Edit2 className="mr-2 h-4 w-4" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteSession(session.id, e);
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => router.push(`/admin/sessions/${s.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {!s.ended_at &&
+                          s.creator_email === session?.user?.email && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => endSession()}
+                            >
+                              <StopCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={(e) => deleteSession(s.id, e)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

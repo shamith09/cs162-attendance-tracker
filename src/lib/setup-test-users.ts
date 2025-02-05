@@ -13,6 +13,7 @@ async function setupTestUsers() {
       INSERT INTO users (id, email, name, is_admin)
       VALUES 
         (UUID(), 'admin@test.com', 'Test Admin', TRUE),
+        (UUID(), 'admin2@test.com', 'Test Admin 2', TRUE),
         (UUID(), 'student@test.com', 'Test Student', FALSE)
       ON DUPLICATE KEY UPDATE
         name = VALUES(name),

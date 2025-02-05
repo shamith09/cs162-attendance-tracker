@@ -20,8 +20,8 @@ export async function GET() {
 
   const connection = await pool.getConnection();
   try {
-    const [[user]] = await connection.execute<RowDataPacket[]>(
-      "SELECT is_admin FROM users WHERE email = ?",
+    const [[user]] = await connection.execute<(RowDataPacket & { id: string; is_admin: boolean })[]>(
+      "SELECT id, is_admin FROM users WHERE email = ?",
       [session.user.email]
     );
 
@@ -29,8 +29,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const [sessions] = await connection.execute<SessionRecord[]>(
-      "SELECT * FROM sessions ORDER BY created_at DESC"
+    const [sessions] = await connection.execute<(SessionRecord & { creator_name: string; creator_email: string })[]>(
+      `SELECT s.*, u.name as creator_name, u.email as creator_email 
+       FROM sessions s 
+       JOIN users u ON s.created_by = u.id 
+       ORDER BY s.created_at DESC`
     );
 
     return NextResponse.json({ sessions });
