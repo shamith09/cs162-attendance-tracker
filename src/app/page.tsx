@@ -164,6 +164,61 @@ export default function Home() {
     );
   }
 
+  const loginMethods = [
+    process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "true" && (
+      <Button
+        key="google"
+        variant="outline"
+        className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
+        onClick={() => signIn("google")}
+      >
+        <Image
+          src="https://authjs.dev/img/providers/google.svg"
+          alt="Google"
+          width={20}
+          height={20}
+        />
+        <span className="text-black dark:text-foreground">
+          Sign in with Google
+        </span>
+      </Button>
+    ),
+    process.env.NEXT_PUBLIC_GITHUB_LOGIN === "true" && (
+      <Button
+        key="github"
+        variant="outline"
+        className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
+        onClick={() => signIn("github")}
+      >
+        <Image
+          src="https://authjs.dev/img/providers/github.svg"
+          alt="GitHub"
+          width={20}
+          height={20}
+          className="dark:invert"
+        />
+        <span className="text-black dark:text-foreground">
+          Sign in with GitHub
+        </span>
+      </Button>
+    ),
+    process.env.NEXT_PUBLIC_TEST_LOGINS === "true" && (
+      <div key="test">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">
+              Development Only
+            </span>
+          </div>
+        </div>
+        <TestLogin />
+      </div>
+    ),
+  ].filter(Boolean);
+
   return (
     <div className="grid min-h-screen bg-background">
       <div className="absolute top-4 right-4">
@@ -195,60 +250,17 @@ export default function Home() {
                 Sign in to mark your attendance or manage sessions.
               </p>
             </div>
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                {process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "true" && (
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
-                    onClick={() => signIn("google")}
-                  >
-                    <Image
-                      src="https://authjs.dev/img/providers/google.svg"
-                      alt="Google"
-                      width={20}
-                      height={20}
-                    />
-                    <span className="text-black dark:text-foreground">
-                      Sign in with Google
-                    </span>
-                  </Button>
-                )}
-                {process.env.NEXT_PUBLIC_GITHUB_LOGIN === "true" && (
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
-                    onClick={() => signIn("github")}
-                  >
-                    <Image
-                      src="https://authjs.dev/img/providers/github.svg"
-                      alt="GitHub"
-                      width={20}
-                      height={20}
-                      className="dark:invert"
-                    />
-                    <span className="text-black dark:text-foreground">
-                      Sign in with GitHub
-                    </span>
-                  </Button>
-                )}
-                {process.env.NEXT_PUBLIC_TEST_LOGINS === "true" && (
-                  <>
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-card px-2 text-muted-foreground">
-                          Development Only
-                        </span>
-                      </div>
-                    </div>
-                    <TestLogin />
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            {process.env.NEXT_PUBLIC_TEST_LOGINS === "true" || loginMethods.length > 1 ? (
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  {loginMethods}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {loginMethods}
+              </div>
+            )}
           </div>
         </div>
       </div>
