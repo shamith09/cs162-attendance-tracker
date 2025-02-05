@@ -34,6 +34,7 @@ import {
   Maximize2,
   Eye,
   StopCircle,
+  Check,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -63,6 +64,7 @@ import {
 } from "@/components/ui/resizable";
 import { DynamicQRCode } from "@/components/DynamicQRCode";
 import { Badge } from "@/components/ui/badge";
+import { Toggle } from "@/components/ui/toggle";
 
 interface Session {
   id: string;
@@ -129,6 +131,8 @@ export default function AdminDashboard() {
   } | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [nameFilter, setNameFilter] = useState("");
+  const [showMySessionsOnly, setShowMySessionsOnly] = useState(false);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -398,6 +402,12 @@ export default function AdminDashboard() {
     }
   };
 
+  const filteredSessions = pastSessions.filter(s => {
+    const matchesName = s.name.toLowerCase().includes(nameFilter.toLowerCase());
+    const matchesCreator = !showMySessionsOnly || s.creator_email === session?.user?.email;
+    return matchesName && matchesCreator;
+  });
+
   if (status === "loading" || !session?.user?.isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
@@ -625,12 +635,28 @@ export default function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
+            <div className="flex items-center gap-4 mb-4">
+              <Input
+                placeholder="Filter by name..."
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
+                className="max-w-sm"
+              />
+              <Toggle
+                pressed={showMySessionsOnly}
+                onPressedChange={setShowMySessionsOnly}
+                className="gap-2 px-4"
+              >
+                {showMySessionsOnly && <Check className="h-4 w-4" />}
+                My Sessions
+              </Toggle>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[30px]">
                     <Checkbox
-                      checked={selectedSessions.length === pastSessions.length}
+                      checked={selectedSessions.length === filteredSessions.length}
                       onCheckedChange={handleSelectAll}
                       aria-label="Select all"
                     />
@@ -643,7 +669,7 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pastSessions.map((s) => (
+                {filteredSessions.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell>
                       <Checkbox
