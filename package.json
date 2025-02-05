@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup-test-users": "tsx src/lib/setup-test-users.ts"
+    "setup-test-users": "tsx src/lib/setup-test-users.ts",
+    "format": "bunx prettier --write \"src/**/*.{ts,tsx}\"",
+    "prepare": "husky"
   },
   "dependencies": {
     "@auth/core": "^0.37.4",
@@ -59,9 +61,19 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.7.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "lint-staged": "^15.4.3",
+    "husky": "^9.1.7"
   },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }
