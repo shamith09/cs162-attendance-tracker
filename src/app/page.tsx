@@ -197,38 +197,42 @@ export default function Home() {
             </div>
             <Card>
               <CardContent className="pt-6 space-y-4">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
-                  onClick={() => signIn("google")}
-                >
-                  <Image
-                    src="https://authjs.dev/img/providers/google.svg"
-                    alt="Google"
-                    width={20}
-                    height={20}
-                  />
-                  <span className="text-black dark:text-foreground">
-                    Sign in with Google
-                  </span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
-                  onClick={() => signIn("github")}
-                >
-                  <Image
-                    src="https://authjs.dev/img/providers/github.svg"
-                    alt="GitHub"
-                    width={20}
-                    height={20}
-                    className="dark:invert"
-                  />
-                  <span className="text-black dark:text-foreground">
-                    Sign in with GitHub
-                  </span>
-                </Button>
-                {process.env.NEXT_PUBLIC_TEST_LOGINS && (
+                {process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "true" && (
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
+                    onClick={() => signIn("google")}
+                  >
+                    <Image
+                      src="https://authjs.dev/img/providers/google.svg"
+                      alt="Google"
+                      width={20}
+                      height={20}
+                    />
+                    <span className="text-black dark:text-foreground">
+                      Sign in with Google
+                    </span>
+                  </Button>
+                )}
+                {process.env.NEXT_PUBLIC_GITHUB_LOGIN === "true" && (
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 dark:bg-background dark:hover:bg-background/80"
+                    onClick={() => signIn("github")}
+                  >
+                    <Image
+                      src="https://authjs.dev/img/providers/github.svg"
+                      alt="GitHub"
+                      width={20}
+                      height={20}
+                      className="dark:invert"
+                    />
+                    <span className="text-black dark:text-foreground">
+                      Sign in with GitHub
+                    </span>
+                  </Button>
+                )}
+                {process.env.NEXT_PUBLIC_TEST_LOGINS === "true" && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
