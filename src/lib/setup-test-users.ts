@@ -1,11 +1,11 @@
-import mysql from 'mysql2/promise';
+import mysql from "mysql2/promise";
 
 async function setupTestUsers() {
   const connection = await mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'attendance_tracker'
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "attendance_tracker",
   });
 
   try {
@@ -29,4 +29,4 @@ async function setupTestUsers() {
   }
 }
 
-setupTestUsers(); 
+setupTestUsers();

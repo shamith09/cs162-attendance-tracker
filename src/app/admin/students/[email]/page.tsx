@@ -1,18 +1,25 @@
-'use client';
+"use client";
 
-import { useEffect, useState, use } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { useEffect, useState, use } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import Image from "next/image";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Home } from "lucide-react";
 
 interface StudentAttendance {
@@ -36,15 +43,20 @@ export default function StudentDetails({
   const { email } = use(params);
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [studentData, setStudentData] = useState<{ name: string; email: string } | null>(null);
-  const [attendanceHistory, setAttendanceHistory] = useState<StudentAttendance[]>([]);
+  const [studentData, setStudentData] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
+  const [attendanceHistory, setAttendanceHistory] = useState<
+    StudentAttendance[]
+  >([]);
   const [stats, setStats] = useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === "loading") return;
     if (!session?.user?.isAdmin) {
-      router.push('/');
+      router.push("/");
       return;
     }
 
@@ -52,7 +64,7 @@ export default function StudentDetails({
       try {
         const [studentRes, historyRes] = await Promise.all([
           fetch(`/api/students/${encodeURIComponent(email)}`),
-          fetch(`/api/students/${encodeURIComponent(email)}/attendance`)
+          fetch(`/api/students/${encodeURIComponent(email)}/attendance`),
         ]);
 
         if (studentRes.status === 404 || historyRes.status === 404) {
@@ -61,19 +73,19 @@ export default function StudentDetails({
         }
 
         if (!studentRes.ok || !historyRes.ok) {
-          throw new Error('Failed to fetch student data');
+          throw new Error("Failed to fetch student data");
         }
 
         const [studentData, historyData] = await Promise.all([
           studentRes.json(),
-          historyRes.json()
+          historyRes.json(),
         ]);
 
         setStudentData(studentData);
         setAttendanceHistory(historyData.history);
         setStats(historyData.stats);
       } catch (error) {
-        console.error('Error fetching student data:', error);
+        console.error("Error fetching student data:", error);
       } finally {
         setLoading(false);
       }
@@ -82,7 +94,7 @@ export default function StudentDetails({
     fetchStudentData();
   }, [email, session, status, router]);
 
-  if (status === 'loading' || loading) {
+  if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
         <LoadingSpinner />
@@ -114,21 +126,17 @@ export default function StudentDetails({
 
         <div className="flex justify-between items-center mb-8 mt-4">
           <div className="flex items-center gap-4">
-            <Image
-              src="/logo.png"
-              alt="CS 162 Logo"
-              width={40}
-              height={40}
-            />
+            <Image src="/logo.png" alt="CS 162 Logo" width={40} height={40} />
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{studentData?.name}</h1>
-              <p className="text-sm text-muted-foreground">{studentData?.email}</p>
+              <h1 className="text-2xl font-bold text-foreground">
+                {studentData?.name}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {studentData?.email}
+              </p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-          >
+          <Button variant="outline" onClick={() => router.back()}>
             Back
           </Button>
         </div>
@@ -156,7 +164,8 @@ export default function StudentDetails({
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-4">
-                    Average arrival time: {stats.averageArrivalMinutes} minutes after start
+                    Average arrival time: {stats.averageArrivalMinutes} minutes
+                    after start
                   </p>
                 </div>
               </CardContent>
@@ -175,7 +184,9 @@ export default function StudentDetails({
                           <div>
                             <p className="font-medium">{record.session_name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {new Date(record.session_date).toLocaleDateString()}
+                              {new Date(
+                                record.session_date,
+                              ).toLocaleDateString()}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -188,7 +199,9 @@ export default function StudentDetails({
                       </div>
                     ))}
                     {attendanceHistory.length === 0 && (
-                      <p className="text-center text-muted-foreground">No attendance records found.</p>
+                      <p className="text-center text-muted-foreground">
+                        No attendance records found.
+                      </p>
                     )}
                   </div>
                 </ScrollArea>
@@ -199,4 +212,4 @@ export default function StudentDetails({
       </div>
     </div>
   );
-} 
+}

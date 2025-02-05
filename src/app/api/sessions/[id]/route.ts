@@ -13,7 +13,7 @@ interface SessionRecord extends RowDataPacket {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
 
@@ -24,7 +24,7 @@ export async function GET(
 
   const [[user]] = await pool.execute<RowDataPacket[]>(
     "SELECT is_admin FROM users WHERE email = ?",
-    [session.user.email]
+    [session.user.email],
   );
 
   if (!user?.is_admin) {
@@ -33,7 +33,7 @@ export async function GET(
 
   const [[sessionData]] = await pool.execute<SessionRecord[]>(
     "SELECT * FROM sessions WHERE id = ?",
-    [id]
+    [id],
   );
 
   if (!sessionData) {
@@ -45,10 +45,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  
+
   const session = await getServerSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,7 +56,7 @@ export async function PUT(
 
   const [[user]] = await pool.execute<RowDataPacket[]>(
     "SELECT is_admin FROM users WHERE email = ?",
-    [session.user.email]
+    [session.user.email],
   );
 
   if (!user?.is_admin) {
@@ -65,12 +65,12 @@ export async function PUT(
 
   await pool.execute(
     "UPDATE sessions SET ended_at = CURRENT_TIMESTAMP WHERE id = ?",
-    [id]
+    [id],
   );
 
   const [[updatedSession]] = await pool.execute<SessionRecord[]>(
     "SELECT * FROM sessions WHERE id = ?",
-    [id]
+    [id],
   );
 
   return NextResponse.json(updatedSession);
@@ -78,10 +78,10 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  
+
   const session = await getServerSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -89,7 +89,7 @@ export async function DELETE(
 
   const [[user]] = await pool.execute<RowDataPacket[]>(
     "SELECT is_admin FROM users WHERE email = ?",
-    [session.user.email]
+    [session.user.email],
   );
 
   if (!user?.is_admin) {
@@ -97,18 +97,11 @@ export async function DELETE(
   }
 
   // Delete related records first
-  await pool.execute(
-    "DELETE FROM attendance_records WHERE session_id = ?",
-    [id]
-  );
-  await pool.execute(
-    "DELETE FROM attendance_codes WHERE session_id = ?",
-    [id]
-  );
-  await pool.execute(
-    "DELETE FROM sessions WHERE id = ?",
-    [id]
-  );
+  await pool.execute("DELETE FROM attendance_records WHERE session_id = ?", [
+    id,
+  ]);
+  await pool.execute("DELETE FROM attendance_codes WHERE session_id = ?", [id]);
+  await pool.execute("DELETE FROM sessions WHERE id = ?", [id]);
 
   return NextResponse.json({ success: true });
-} 
+}

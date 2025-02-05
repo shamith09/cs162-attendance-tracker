@@ -71,7 +71,7 @@ export default function MarkAttendance({
         const data = await res.json();
         if (!res.ok) {
           setError(
-            data.error || "Failed to mark attendance. Please try again."
+            data.error || "Failed to mark attendance. Please try again.",
           );
         } else if (data.success) {
           router.push("/success");

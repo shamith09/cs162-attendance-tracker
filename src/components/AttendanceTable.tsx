@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -10,11 +10,11 @@ import {
   getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown } from "lucide-react"
+} from "@tanstack/react-table";
+import { ArrowUpDown } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -22,12 +22,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 export interface Attendee {
-  user_name: string
-  user_email: string
-  timestamp: string
+  user_name: string;
+  user_email: string;
+  timestamp: string;
 }
 
 export const columns: ColumnDef<Attendee>[] = [
@@ -42,7 +42,7 @@ export const columns: ColumnDef<Attendee>[] = [
           Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
   },
   {
@@ -56,7 +56,7 @@ export const columns: ColumnDef<Attendee>[] = [
           Email
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
   },
   {
@@ -70,22 +70,24 @@ export const columns: ColumnDef<Attendee>[] = [
           Time
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
     cell: ({ row }) => {
-      return new Date(row.getValue("timestamp")).toLocaleTimeString()
+      return new Date(row.getValue("timestamp")).toLocaleTimeString();
     },
   },
-]
+];
 
 interface AttendanceTableProps {
-  data: Attendee[]
-  className?: string
+  data: Attendee[];
+  className?: string;
 }
 
 export function AttendanceTable({ data, className }: AttendanceTableProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
 
   const table = useReactTable({
     data,
@@ -99,14 +101,16 @@ export function AttendanceTable({ data, className }: AttendanceTableProps) {
       sorting,
       columnFilters,
     },
-  })
+  });
 
   return (
     <div className={className}>
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter by name..."
-          value={(table.getColumn("user_name")?.getFilterValue() as string) ?? ""}
+          value={
+            (table.getColumn("user_name")?.getFilterValue() as string) ?? ""
+          }
           onChange={(event) =>
             table.getColumn("user_name")?.setFilterValue(event.target.value)
           }
@@ -124,7 +128,7 @@ export function AttendanceTable({ data, className }: AttendanceTableProps) {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -137,14 +141,20 @@ export function AttendanceTable({ data, className }: AttendanceTableProps) {
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -153,5 +163,5 @@ export function AttendanceTable({ data, className }: AttendanceTableProps) {
         </Table>
       </div>
     </div>
-  )
-} 
+  );
+}

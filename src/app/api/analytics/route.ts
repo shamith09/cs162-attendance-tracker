@@ -13,7 +13,7 @@ export async function GET() {
   try {
     const [[user]] = await connection.execute<RowDataPacket[]>(
       "SELECT is_admin FROM users WHERE email = ?",
-      [session.user.email]
+      [session.user.email],
     );
 
     if (!user?.is_admin) {
@@ -22,13 +22,13 @@ export async function GET() {
 
     // Get total sessions
     const [sessionRows] = await connection.execute<RowDataPacket[]>(
-      "SELECT COUNT(*) as count FROM sessions"
+      "SELECT COUNT(*) as count FROM sessions",
     );
     const totalSessions = sessionRows[0].count;
 
     // Get total unique students
     const [studentRows] = await connection.execute<RowDataPacket[]>(
-      "SELECT COUNT(*) as count FROM users WHERE is_admin = FALSE"
+      "SELECT COUNT(*) as count FROM users WHERE is_admin = FALSE",
     );
     const totalStudents = studentRows[0].count;
 
@@ -38,7 +38,7 @@ export async function GET() {
         COUNT(DISTINCT user_id) as student_count,
         session_id
       FROM attendance_records
-      GROUP BY session_id`
+      GROUP BY session_id`,
     );
 
     const averageAttendance =
@@ -46,8 +46,8 @@ export async function GET() {
         ? Math.round(
             attendanceStats.reduce(
               (acc: number, curr: RowDataPacket) => acc + curr.student_count,
-              0
-            ) / attendanceStats.length
+              0,
+            ) / attendanceStats.length,
           )
         : 0;
 
@@ -60,7 +60,7 @@ export async function GET() {
       LEFT JOIN attendance_records a ON s.id = a.session_id
       GROUP BY s.id, s.name
       ORDER BY s.created_at DESC
-      LIMIT 7`
+      LIMIT 7`,
     );
 
     const attendanceOverTime = recentSessions.reverse().map((session) => ({

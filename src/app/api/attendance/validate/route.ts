@@ -20,7 +20,6 @@ export async function POST(req: Request) {
   try {
     // If it's a 6-digit code, verify and mark attendance directly
     if (code.length === 6) {
-
       // Get user ID
       const [[user]] = await connection.execute<
         (RowDataPacket & { id: string })[]
@@ -51,33 +50,33 @@ export async function POST(req: Request) {
          AND s.ended_at IS NULL
          ORDER BY ac.created_at DESC
          LIMIT 1`,
-        [code]
+        [code],
       );
 
       if (codeRows.length === 0) {
         return NextResponse.json(
           { error: "Invalid or expired code" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       // Check if attendance already marked
       const [attendanceRows] = await connection.execute<RowDataPacket[]>(
         "SELECT id FROM attendance_records WHERE user_id = ? AND session_id = ?",
-        [user.id, codeRows[0].session_id]
+        [user.id, codeRows[0].session_id],
       );
 
       if (attendanceRows.length > 0) {
         return NextResponse.json(
           { error: "Attendance already marked" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       // Mark attendance
       await connection.execute(
         "INSERT INTO attendance_records (id, user_id, code_id, session_id, timestamp) VALUES (?, ?, ?, ?, NOW())",
-        [uuidv4(), user.id, codeRows[0].id, codeRows[0].session_id]
+        [uuidv4(), user.id, codeRows[0].id, codeRows[0].session_id],
       );
 
       return NextResponse.json({ success: true });
@@ -94,7 +93,7 @@ export async function POST(req: Request) {
        FROM attendance_codes ac 
        JOIN sessions s ON ac.session_id = s.id
        WHERE ac.code = ?`,
-      [code]
+      [code],
     );
 
     if (codeRows.length === 0) {
@@ -108,7 +107,7 @@ export async function POST(req: Request) {
     // Store validation token in database
     await connection.execute(
       "INSERT INTO code_validations (id, code_id, expires_at) VALUES (?, ?, ?)",
-      [validationToken, codeRows[0].id, validationExpiry]
+      [validationToken, codeRows[0].id, validationExpiry],
     );
 
     // Set validation token in httpOnly cookie
@@ -125,7 +124,7 @@ export async function POST(req: Request) {
     console.error("Error validating code:", error);
     return NextResponse.json(
       { error: "Failed to validate code" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     connection.release();

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { PulseLoader } from "react-spinners";
 
@@ -18,4 +18,4 @@ export function LoadingSpinner({ text = "Loading..." }: LoadingSpinnerProps) {
       <span className="text-sm">{text}</span>
     </div>
   );
-} 
+}

@@ -23,7 +23,7 @@ export function DynamicQRCode({
     const updateSize = () => {
       if (!containerRef.current) return;
       const { width, height } = containerRef.current.getBoundingClientRect();
-      
+
       // If width is greater than height and we have enough space for side-by-side
       if (width > height && width > 700) {
         setLayout("row");
@@ -42,7 +42,10 @@ export function DynamicQRCode({
     return () => observer.disconnect();
   }, []);
 
-  function getRemainingTimePercentage(expiryDate: Date, totalDurationMs: number): number {
+  function getRemainingTimePercentage(
+    expiryDate: Date,
+    totalDurationMs: number,
+  ): number {
     const now = new Date();
     const remaining = expiryDate.getTime() - now.getTime();
     if (remaining <= 0) return 0;
@@ -58,8 +61,13 @@ export function DynamicQRCode({
   }
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center">
-      <div className={`flex ${layout === "row" ? "flex-row" : "flex-col"} items-center gap-8`}>
+    <div
+      ref={containerRef}
+      className="w-full h-full flex items-center justify-center"
+    >
+      <div
+        className={`flex ${layout === "row" ? "flex-row" : "flex-col"} items-center gap-8`}
+      >
         <div className="flex flex-col items-center gap-4">
           <p className="text-4xl font-mono font-bold text-foreground">
             {code.split("/").pop()?.slice(-6).toUpperCase()}
@@ -71,11 +79,13 @@ export function DynamicQRCode({
           />
         </div>
         {codeExpiry && (
-          <div className={`${layout === "row" ? "w-40" : "w-32"} aspect-square`}>
+          <div
+            className={`${layout === "row" ? "w-40" : "w-32"} aspect-square`}
+          >
             <CircularProgressbar
               value={getRemainingTimePercentage(
                 codeExpiry,
-                expirationSeconds * 1000
+                expirationSeconds * 1000,
               )}
               text={formatRemainingTime(codeExpiry)}
               styles={buildStyles({
@@ -83,9 +93,7 @@ export function DynamicQRCode({
                 pathColor: isFlashing
                   ? "rgb(239, 68, 68)"
                   : "hsl(var(--primary))",
-                textColor: isFlashing
-                  ? "rgb(239, 68, 68)"
-                  : "currentColor",
+                textColor: isFlashing ? "rgb(239, 68, 68)" : "currentColor",
                 trailColor: "hsl(var(--muted))",
                 strokeLinecap: "round",
                 pathTransitionDuration: 0.5,
@@ -96,4 +104,4 @@ export function DynamicQRCode({
       </div>
     </div>
   );
-} 
+}

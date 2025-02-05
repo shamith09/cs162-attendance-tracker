@@ -14,7 +14,7 @@ export async function GET() {
   try {
     const [[user]] = await connection.execute<RowDataPacket[]>(
       "SELECT is_admin FROM users WHERE email = ?",
-      [session.user.email]
+      [session.user.email],
     );
 
     if (!user?.is_admin) {
@@ -29,7 +29,7 @@ export async function GET() {
       FROM users u
       LEFT JOIN sessions s ON u.id = s.created_by
       WHERE u.is_admin = TRUE
-      GROUP BY u.id, u.email, u.name`
+      GROUP BY u.id, u.email, u.name`,
     );
 
     return NextResponse.json({ admins });
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   try {
     const [[user]] = await connection.execute<RowDataPacket[]>(
       "SELECT is_admin FROM users WHERE email = ?",
-      [session.user.email]
+      [session.user.email],
     );
 
     if (!user?.is_admin) {
@@ -62,19 +62,19 @@ export async function POST(request: Request) {
 
     const [[existingUser]] = await connection.execute<RowDataPacket[]>(
       "SELECT id FROM users WHERE email = ?",
-      [email]
+      [email],
     );
 
     if (existingUser) {
       await connection.execute(
         "UPDATE users SET is_admin = TRUE, name = COALESCE(?, name) WHERE email = ?",
-        [name, email]
+        [name, email],
       );
     } else {
       const id = uuidv4();
       await connection.execute(
         "INSERT INTO users (id, email, name, is_admin) VALUES (?, ?, ?, TRUE)",
-        [id, email, name]
+        [id, email, name],
       );
     }
 
@@ -94,7 +94,7 @@ export async function DELETE(request: Request) {
   try {
     const [[user]] = await connection.execute<RowDataPacket[]>(
       "SELECT is_admin FROM users WHERE email = ?",
-      [session.user.email]
+      [session.user.email],
     );
 
     if (!user?.is_admin) {
@@ -109,13 +109,13 @@ export async function DELETE(request: Request) {
     if (email === session.user.email) {
       return NextResponse.json(
         { error: "Cannot remove yourself as admin" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     await connection.execute(
       "UPDATE users SET is_admin = FALSE WHERE email = ?",
-      [email]
+      [email],
     );
 
     return NextResponse.json({ success: true });

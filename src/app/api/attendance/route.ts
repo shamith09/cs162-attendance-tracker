@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
   const [[user]] = await pool.execute<RowDataPacket[]>(
     "SELECT is_admin FROM users WHERE email = ?",
-    [session.user.email]
+    [session.user.email],
   );
 
   if (!user?.is_admin) {
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
      JOIN users u ON ar.user_id = u.id 
      WHERE ar.session_id = ? 
      ORDER BY ar.timestamp DESC`,
-    [sessionId]
+    [sessionId],
   );
 
   return NextResponse.json({ attendees });
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { code } = await req.json();
-  const validationToken = req.cookies.get('validation_token')?.value;
+  const validationToken = req.cookies.get("validation_token")?.value;
 
   if (!validationToken) {
     return NextResponse.json({ error: "Invalid validation" }, { status: 400 });
@@ -64,11 +64,14 @@ export async function POST(req: NextRequest) {
        FROM code_validations cv
        JOIN attendance_codes ac ON cv.code_id = ac.id
        WHERE cv.id = ? AND cv.expires_at > NOW() AND ac.code = ?`,
-      [validationToken, code]
+      [validationToken, code],
     );
 
     if (validationRows.length === 0) {
-      return NextResponse.json({ error: "Invalid or expired validation" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid or expired validation" },
+        { status: 400 },
+      );
     }
 
     const { code_id, session_id } = validationRows[0];
@@ -76,7 +79,7 @@ export async function POST(req: NextRequest) {
     // Check if session is still active
     const [sessionRows] = await pool.execute<RowDataPacket[]>(
       "SELECT ended_at FROM sessions WHERE id = ?",
-      [session_id]
+      [session_id],
     );
 
     if (sessionRows.length === 0 || sessionRows[0].ended_at) {
@@ -86,7 +89,7 @@ export async function POST(req: NextRequest) {
     // Get user ID from email
     const [userRows] = await pool.execute<(RowDataPacket & { id: string })[]>(
       "SELECT id FROM users WHERE email = ?",
-      [session.user.email]
+      [session.user.email],
     );
 
     if (userRows.length === 0) {
@@ -96,11 +99,14 @@ export async function POST(req: NextRequest) {
     // Check if attendance already marked
     const [attendanceRows] = await pool.execute<RowDataPacket[]>(
       "SELECT id FROM attendance_records WHERE user_id = ? AND session_id = ?",
-      [userRows[0].id, session_id]
+      [userRows[0].id, session_id],
     );
 
     if (attendanceRows.length > 0) {
-      return NextResponse.json({ error: "Attendance already marked" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Attendance already marked" },
+        { status: 400 },
+      );
     }
 
     // Mark attendance and delete validation token
@@ -109,12 +115,11 @@ export async function POST(req: NextRequest) {
       await connection.beginTransaction();
       await connection.execute(
         "INSERT INTO attendance_records (id, user_id, code_id, session_id, timestamp) VALUES (?, ?, ?, ?, NOW())",
-        [uuidv4(), userRows[0].id, code_id, session_id]
+        [uuidv4(), userRows[0].id, code_id, session_id],
       );
-      await connection.execute(
-        "DELETE FROM code_validations WHERE id = ?",
-        [validationToken]
-      );
+      await connection.execute("DELETE FROM code_validations WHERE id = ?", [
+        validationToken,
+      ]);
       await connection.commit();
     } catch (error) {
       await connection.rollback();
@@ -125,13 +130,13 @@ export async function POST(req: NextRequest) {
 
     // Clear validation cookie
     const response = NextResponse.json({ success: true });
-    response.cookies.set('validation_token', '', { maxAge: 0 });
+    response.cookies.set("validation_token", "", { maxAge: 0 });
     return response;
   } catch (error) {
     console.error("Error marking attendance:", error);
     return NextResponse.json(
       { error: "Failed to mark attendance" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

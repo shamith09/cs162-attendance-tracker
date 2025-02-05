@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   try {
     const [[user]] = await connection.execute<RowDataPacket[]>(
       "SELECT is_admin FROM users WHERE email = ?",
-      [session.user.email]
+      [session.user.email],
     );
 
     if (!user?.is_admin) {
@@ -25,13 +25,16 @@ export async function GET(req: NextRequest) {
     const sessionId = searchParams.get("sessionId");
 
     if (!sessionId) {
-      return NextResponse.json({ error: "Session ID required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Session ID required" },
+        { status: 400 },
+      );
     }
 
     // Get the session's expiration seconds
     const [[sessionData]] = await connection.execute<RowDataPacket[]>(
       "SELECT expiration_seconds FROM sessions WHERE id = ?",
-      [sessionId]
+      [sessionId],
     );
 
     if (!sessionData) {
@@ -41,23 +44,22 @@ export async function GET(req: NextRequest) {
     const expirationSeconds = sessionData.expiration_seconds;
     const id = uuidv4();
     const code = uuidv4();
-    
+
     // Store expiration time using MySQL's timezone functions
     await connection.execute(
       `INSERT INTO attendance_codes (id, session_id, code, expires_at) 
        VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ? SECOND))`,
-      [id, sessionId, code, expirationSeconds]
+      [id, sessionId, code, expirationSeconds],
     );
 
     // Get the stored expiration time
-    const [[codeData]] = await connection.execute<(RowDataPacket & { expires_at: string })[]>(
-      `SELECT expires_at FROM attendance_codes WHERE id = ?`,
-      [id]
-    );
+    const [[codeData]] = await connection.execute<
+      (RowDataPacket & { expires_at: string })[]
+    >(`SELECT expires_at FROM attendance_codes WHERE id = ?`, [id]);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       code,
-      expiresAt: codeData.expires_at
+      expiresAt: codeData.expires_at,
     });
   } finally {
     connection.release();

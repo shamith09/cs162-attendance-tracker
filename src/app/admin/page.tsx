@@ -91,7 +91,7 @@ interface Analytics {
 
 function getRemainingTimePercentage(
   expiryDate: Date,
-  totalDurationMs: number
+  totalDurationMs: number,
 ): number {
   const now = new Date();
   const remaining = expiryDate.getTime() - now.getTime();
@@ -147,7 +147,7 @@ export default function AdminDashboard() {
       const fetchCode = async () => {
         try {
           const codeRes = await fetch(
-            "/api/code?sessionId=" + currentSession.id
+            "/api/code?sessionId=" + currentSession.id,
           );
           if (codeRes.ok) {
             const codeData = await codeRes.json();
@@ -165,14 +165,14 @@ export default function AdminDashboard() {
       // Poll QR code based on expiration time
       const codeInterval = setInterval(
         fetchCode,
-        currentSession.expiration_seconds * 1000
+        currentSession.expiration_seconds * 1000,
       );
 
       // Fetch attendees
       const fetchAttendees = async () => {
         try {
           const attendeesRes = await fetch(
-            "/api/attendance?sessionId=" + currentSession.id
+            "/api/attendance?sessionId=" + currentSession.id,
           );
           if (attendeesRes.ok) {
             const attendeesData = await attendeesRes.json();
@@ -227,7 +227,7 @@ export default function AdminDashboard() {
         if (!res.ok) {
           const errorData = await res.text();
           throw new Error(
-            `Failed to fetch sessions: ${res.status} ${res.statusText} - ${errorData}`
+            `Failed to fetch sessions: ${res.status} ${res.statusText} - ${errorData}`,
           );
         }
         const data = await res.json();
@@ -235,7 +235,8 @@ export default function AdminDashboard() {
 
         // Find any active session created by current admin (no ended_at date)
         const activeSession = data.sessions?.find(
-          (s: Session) => !s.ended_at && s.creator_email === session?.user?.email
+          (s: Session) =>
+            !s.ended_at && s.creator_email === session?.user?.email,
         );
         if (activeSession) {
           setCurrentSession(activeSession);
@@ -341,7 +342,7 @@ export default function AdminDashboard() {
 
   const handleSelectOne = (
     sessionId: string,
-    checked: boolean | "indeterminate"
+    checked: boolean | "indeterminate",
   ) => {
     if (checked) {
       setSelectedSessions([...selectedSessions, sessionId]);
@@ -365,8 +366,8 @@ export default function AdminDashboard() {
       if (res.ok) {
         setPastSessions((sessions) =>
           sessions.map((s) =>
-            s.id === renameSession.id ? { ...s, name: renameSession.name } : s
-          )
+            s.id === renameSession.id ? { ...s, name: renameSession.name } : s,
+          ),
         );
       }
     } catch (error) {
@@ -380,11 +381,11 @@ export default function AdminDashboard() {
     try {
       await Promise.all(
         deleteConfirmation.ids.map((id) =>
-          fetch(`/api/sessions/${id}`, { method: "DELETE" })
-        )
+          fetch(`/api/sessions/${id}`, { method: "DELETE" }),
+        ),
       );
       setPastSessions((sessions) =>
-        sessions.filter((s) => !deleteConfirmation.ids.includes(s.id))
+        sessions.filter((s) => !deleteConfirmation.ids.includes(s.id)),
       );
       setSelectedSessions([]);
 
@@ -402,9 +403,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredSessions = pastSessions.filter(s => {
+  const filteredSessions = pastSessions.filter((s) => {
     const matchesName = s.name.toLowerCase().includes(nameFilter.toLowerCase());
-    const matchesCreator = !showMySessionsOnly || s.creator_email === session?.user?.email;
+    const matchesCreator =
+      !showMySessionsOnly || s.creator_email === session?.user?.email;
     return matchesName && matchesCreator;
   });
 
@@ -526,7 +528,7 @@ export default function AdminDashboard() {
                       value={expirationValue}
                       onChange={(e) =>
                         setExpirationValue(
-                          Math.max(1, parseInt(e.target.value) || 1)
+                          Math.max(1, parseInt(e.target.value) || 1),
                         )
                       }
                       className="w-20"
@@ -535,7 +537,7 @@ export default function AdminDashboard() {
                       value={expirationUnit}
                       onChange={(e) =>
                         setExpirationUnit(
-                          e.target.value as "seconds" | "minutes" | "hours"
+                          e.target.value as "seconds" | "minutes" | "hours",
                         )
                       }
                       className="px-2 py-1.5 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
@@ -576,7 +578,7 @@ export default function AdminDashboard() {
                               <CircularProgressbar
                                 value={getRemainingTimePercentage(
                                   codeExpiry,
-                                  currentSession.expiration_seconds * 1000
+                                  currentSession.expiration_seconds * 1000,
                                 )}
                                 text={formatRemainingTime(codeExpiry)}
                                 styles={buildStyles({
@@ -656,7 +658,9 @@ export default function AdminDashboard() {
                 <TableRow>
                   <TableHead className="w-[30px]">
                     <Checkbox
-                      checked={selectedSessions.length === filteredSessions.length}
+                      checked={
+                        selectedSessions.length === filteredSessions.length
+                      }
                       onCheckedChange={handleSelectAll}
                       aria-label="Select all"
                     />
@@ -824,7 +828,7 @@ export default function AdminDashboard() {
               value={renameSession?.name || ""}
               onChange={(e) =>
                 setRenameSession((prev) =>
-                  prev ? { ...prev, name: e.target.value } : null
+                  prev ? { ...prev, name: e.target.value } : null,
                 )
               }
             />

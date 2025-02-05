@@ -5,7 +5,7 @@ import { RowDataPacket } from "mysql2";
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ email: string }> }
+  context: { params: Promise<{ email: string }> },
 ) {
   const { email: encodedEmail } = await context.params;
   const email = decodeURIComponent(encodedEmail);
@@ -16,7 +16,7 @@ export async function GET(
 
   const [[user]] = await pool.execute<RowDataPacket[]>(
     "SELECT is_admin FROM users WHERE email = ?",
-    [session.user.email]
+    [session.user.email],
   );
 
   if (!user?.is_admin) {
@@ -37,12 +37,12 @@ export async function GET(
     WHERE u.email = ?
     ORDER BY ar.timestamp DESC
   `,
-    [email]
+    [email],
   );
 
   // Get total sessions
   const [[{ totalSessions }]] = await pool.execute<RowDataPacket[]>(
-    "SELECT COUNT(*) as totalSessions FROM sessions WHERE ended_at IS NOT NULL"
+    "SELECT COUNT(*) as totalSessions FROM sessions WHERE ended_at IS NOT NULL",
   );
 
   // Get attended sessions
@@ -53,7 +53,7 @@ export async function GET(
     JOIN users u ON ar.user_id = u.id
     WHERE u.email = ?
   `,
-    [email]
+    [email],
   );
 
   // Get attendance by weekday
@@ -69,7 +69,7 @@ export async function GET(
     GROUP BY DAYOFWEEK(ar.timestamp)
     ORDER BY day_number
   `,
-    [email]
+    [email],
   );
 
   // Get attendance timeline
@@ -84,7 +84,7 @@ export async function GET(
     GROUP BY DATE(ar.timestamp)
     ORDER BY date
   `,
-    [email]
+    [email],
   );
 
   // Calculate average arrival time
@@ -96,7 +96,7 @@ export async function GET(
     JOIN users u ON ar.user_id = u.id
     WHERE u.email = ?
   `,
-    [email]
+    [email],
   );
 
   // Fill in missing weekdays with zero counts

@@ -14,4 +14,4 @@ export function LogoutButton() {
       <LogOut className="h-5 w-5" />
     </Button>
   );
-} 
+}

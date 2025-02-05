@@ -250,16 +250,15 @@ export default function Home() {
                 Sign in to mark your attendance or manage sessions.
               </p>
             </div>
-            {process.env.NEXT_PUBLIC_TEST_LOGINS === "true" || loginMethods.length > 1 ? (
+            {process.env.NEXT_PUBLIC_TEST_LOGINS === "true" ||
+            loginMethods.length > 1 ? (
               <Card>
                 <CardContent className="pt-6 space-y-4">
                   {loginMethods}
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {loginMethods}
-              </div>
+              <div className="space-y-4">{loginMethods}</div>
             )}
           </div>
         </div>

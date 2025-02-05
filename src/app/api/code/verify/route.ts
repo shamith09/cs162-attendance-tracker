@@ -19,13 +19,13 @@ export async function POST(req: NextRequest) {
        WHERE ac.code = ?
        AND ac.expires_at > NOW()
        AND s.ended_at IS NULL`,
-      [code]
+      [code],
     );
 
     if (codeRows.length === 0) {
       return NextResponse.json(
         { error: "Invalid or expired code" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,9 +34,9 @@ export async function POST(req: NextRequest) {
     console.error("Error verifying code:", error);
     return NextResponse.json(
       { error: "Failed to verify code" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     connection.release();
   }
-} 
+}

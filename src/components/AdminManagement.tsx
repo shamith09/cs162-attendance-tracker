@@ -59,8 +59,8 @@ export function AdminManagement() {
       admins.filter(
         (admin) =>
           admin.email.toLowerCase().includes(lowercaseFilter) ||
-          (admin.name?.toLowerCase() || "").includes(lowercaseFilter)
-      )
+          (admin.name?.toLowerCase() || "").includes(lowercaseFilter),
+      ),
     );
   }, [filter, admins]);
 

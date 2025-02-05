@@ -1,11 +1,18 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import Image from 'next/image';
+import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Home } from "lucide-react";
 
 export default function StudentNotFound() {
@@ -35,18 +42,12 @@ export default function StudentNotFound() {
 
         <div className="flex justify-between items-center mb-8 mt-4">
           <div className="flex items-center gap-4">
-            <Image
-              src="/logo.png"
-              alt="CS 162 Logo"
-              width={40}
-              height={40}
-            />
-            <h1 className="text-2xl font-bold text-foreground">Student Not Found</h1>
+            <Image src="/logo.png" alt="CS 162 Logo" width={40} height={40} />
+            <h1 className="text-2xl font-bold text-foreground">
+              Student Not Found
+            </h1>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-          >
+          <Button variant="outline" onClick={() => router.back()}>
             Back
           </Button>
         </div>
@@ -55,7 +56,8 @@ export default function StudentNotFound() {
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <p className="text-muted-foreground">
-                The student you&apos;re looking for could not be found. They may not have attended any sessions yet.
+                The student you&apos;re looking for could not be found. They may
+                not have attended any sessions yet.
               </p>
             </div>
           </CardContent>
@@ -63,4 +65,4 @@ export default function StudentNotFound() {
       </div>
     </div>
   );
-} 
+}

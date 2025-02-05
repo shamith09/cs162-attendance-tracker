@@ -6,58 +6,64 @@ import pool from "@/lib/db";
 import { RowDataPacket } from "mysql2";
 
 const TEST_USERS = {
-  'admin@test.com': {
-    id: 'test-admin',
-    name: 'Test Admin',
-    email: 'admin@test.com',
+  "admin@test.com": {
+    id: "test-admin",
+    name: "Test Admin",
+    email: "admin@test.com",
     isAdmin: true,
   },
-  'admin2@test.com': {
-    id: 'test-admin2',
-    name: 'Test Admin 2',
-    email: 'admin2@test.com',
+  "admin2@test.com": {
+    id: "test-admin2",
+    name: "Test Admin 2",
+    email: "admin2@test.com",
     isAdmin: true,
   },
-  'student@test.com': {
-    id: 'test-student',
-    name: 'Test Student',
-    email: 'student@test.com',
+  "student@test.com": {
+    id: "test-student",
+    name: "Test Student",
+    email: "student@test.com",
     isAdmin: false,
   },
 };
 
 const handler = NextAuth({
   providers: [
-    ...(process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "true" ? [
-      GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        authorization: {
-          params: {
-            prompt: "consent",
-            access_type: "offline",
-            response_type: "code"
-          }
-        }
-      })
-    ] : []),
-    ...(process.env.NEXT_PUBLIC_GITHUB_LOGIN === "true" ? [
-      GitHubProvider({
-        clientId: process.env.GITHUB_CLIENT_ID!,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-      })
-    ] : []),
+    ...(process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "true"
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            authorization: {
+              params: {
+                prompt: "consent",
+                access_type: "offline",
+                response_type: "code",
+              },
+            },
+          }),
+        ]
+      : []),
+    ...(process.env.NEXT_PUBLIC_GITHUB_LOGIN === "true"
+      ? [
+          GitHubProvider({
+            clientId: process.env.GITHUB_CLIENT_ID!,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+          }),
+        ]
+      : []),
     ...(process.env.NEXT_PUBLIC_TEST_LOGINS === "true"
       ? [
           CredentialsProvider({
             id: "credentials",
             name: "Test Users",
             credentials: {
-              email: { type: "text" }
+              email: { type: "text" },
             },
             async authorize(credentials) {
               if (!credentials?.email) return null;
-              return TEST_USERS[credentials.email as keyof typeof TEST_USERS] || null;
+              return (
+                TEST_USERS[credentials.email as keyof typeof TEST_USERS] || null
+              );
             },
           }),
         ]
@@ -65,7 +71,7 @@ const handler = NextAuth({
   ],
   pages: {
     signIn: "/",
-    error: "/error"
+    error: "/error",
   },
   callbacks: {
     async signIn({ user, account }) {
@@ -75,7 +81,7 @@ const handler = NextAuth({
           // First check if user exists with this email
           const [existingUsers] = await connection.execute<RowDataPacket[]>(
             "SELECT id FROM users WHERE email = ?",
-            [user.email]
+            [user.email],
           );
 
           if (existingUsers.length > 0) {
@@ -86,7 +92,7 @@ const handler = NextAuth({
           // Update or insert user
           await connection.execute(
             "INSERT INTO users (id, email, name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name = ?",
-            [user.id, user.email, user.name, user.name]
+            [user.id, user.email, user.name, user.name],
           );
           return true;
         } catch (error) {
@@ -104,7 +110,8 @@ const handler = NextAuth({
     async session({ session }) {
       if (session.user?.email) {
         if (process.env.NEXT_PUBLIC_TEST_LOGINS === "true") {
-          const testUser = TEST_USERS[session.user.email as keyof typeof TEST_USERS];
+          const testUser =
+            TEST_USERS[session.user.email as keyof typeof TEST_USERS];
           if (testUser) {
             session.user.isAdmin = testUser.isAdmin;
             return session;
@@ -113,17 +120,16 @@ const handler = NextAuth({
 
         const connection = await pool.getConnection();
         try {
-          const [rows] = await connection.execute<(RowDataPacket & { is_admin: boolean })[]>(
-            "SELECT is_admin FROM users WHERE email = ?",
-            [session.user.email]
-          );
+          const [rows] = await connection.execute<
+            (RowDataPacket & { is_admin: boolean })[]
+          >("SELECT is_admin FROM users WHERE email = ?", [session.user.email]);
           session.user.isAdmin = rows[0]?.is_admin || false;
         } finally {
           connection.release();
         }
       }
       return session;
-    }
+    },
   },
 });
 

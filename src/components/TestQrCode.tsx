@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,8 @@ interface TestQrCodeProps {
 export function TestQrCode({ url }: TestQrCodeProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
-  
-  if (process.env.NODE_ENV !== 'development') return null;
+
+  if (process.env.NODE_ENV !== "development") return null;
 
   const copyUrl = async () => {
     await navigator.clipboard.writeText(url);
@@ -30,9 +30,7 @@ export function TestQrCode({ url }: TestQrCodeProps) {
     <div className="space-y-4">
       <Separator />
       <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">
-          Development: Test URL
-        </p>
+        <p className="text-sm text-muted-foreground">Development: Test URL</p>
         <div className="flex items-center gap-2">
           <Input
             type="text"
@@ -63,4 +61,4 @@ export function TestQrCode({ url }: TestQrCodeProps) {
       </div>
     </div>
   );
-} 
+}

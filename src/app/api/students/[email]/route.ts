@@ -5,7 +5,7 @@ import { RowDataPacket } from "mysql2";
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ email: string }> }
+  context: { params: Promise<{ email: string }> },
 ) {
   const { email: encodedEmail } = await context.params;
   const email = decodeURIComponent(encodedEmail);
@@ -16,7 +16,7 @@ export async function GET(
 
   const [[user]] = await pool.execute<RowDataPacket[]>(
     "SELECT is_admin FROM users WHERE email = ?",
-    [session.user.email]
+    [session.user.email],
   );
 
   if (!user?.is_admin) {
@@ -25,7 +25,7 @@ export async function GET(
 
   const [[student]] = await pool.execute<RowDataPacket[]>(
     "SELECT name, email FROM users WHERE email = ?",
-    [email]
+    [email],
   );
 
   if (!student) {
@@ -33,4 +33,4 @@ export async function GET(
   }
 
   return NextResponse.json(student);
-} 
+}
