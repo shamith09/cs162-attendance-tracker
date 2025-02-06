@@ -115,7 +115,7 @@ export default function MarkAttendance({
               height={24}
               className="h-6 w-auto"
             />
-            CS 162 Attendance
+            CS 162 Attendance Tracker
           </Link>
         </div>
         <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -203,7 +203,7 @@ export default function MarkAttendance({
             height={24}
             className="h-6 w-auto"
           />
-          CS 162 Attendance
+          CS 162 Attendance Tracker
         </Link>
       </div>
       <div className="flex flex-col gap-4 p-6 md:p-10">
