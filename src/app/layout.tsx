@@ -8,10 +8,10 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
   metadataBase: new URL("https://cs162-attendance-tracker.vercel.app/"),
   openGraph: {
-    title: "Attendance Tracker",
-    description: "QR code based attendance tracking system",
+    title: "CS 162 Attendance Tracker",
+    description: "A refreshing QR code based attendance tracking system.",
     url: "https://cs162-attendance-tracker.vercel.app/",
-    siteName: "CS 162 Attendance",
+    siteName: "CS 162 Attendance Tracker",
     locale: "en_US",
     type: "website",
     images: [
@@ -19,14 +19,14 @@ export const metadata: Metadata = {
         url: "https://cs162-attendance-tracker.vercel.app/og.png",
         width: 3024,
         height: 1890,
-        alt: "CS 162 Attendance",
+        alt: "CS 162 Attendance Tracker",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Attendance Tracker",
-    description: "QR code based attendance tracking system",
+    title: "CS 162 Attendance Tracker",
+    description: "A refreshing QR code based attendance tracking system.",
     images: ["https://cs162-attendance-tracker.vercel.app/og.png"],
   },
 };
