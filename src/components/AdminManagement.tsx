@@ -179,8 +179,14 @@ export function AdminManagement() {
                 className="max-w-sm"
               />
               <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <div className="flex flex-col gap-1">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    addAdmin();
+                  }}
+                  className="flex gap-2"
+                >
+                  <div className="flex-1 flex flex-col gap-1">
                     <Input
                       placeholder="Email..."
                       value={newAdminEmail}
@@ -195,12 +201,12 @@ export function AdminManagement() {
                     placeholder="Name (optional)..."
                     value={newAdminName}
                     onChange={(e) => setNewAdminName(e.target.value)}
-                    className="max-w-sm"
+                    className="flex-1 max-w-sm"
                   />
-                  <Button onClick={addAdmin} disabled={!!emailError}>
+                  <Button type="submit" disabled={!!emailError}>
                     Add
                   </Button>
-                </div>
+                </form>
                 <p className="text-xs text-muted-foreground">
                   Only berkeley.edu email addresses are allowed
                 </p>
