@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import { CircularTimer } from "./CircularTimer";
 
 interface DynamicQRCodeProps {
   code: string;
@@ -42,24 +42,6 @@ export function DynamicQRCode({
     return () => observer.disconnect();
   }, []);
 
-  function getRemainingTimePercentage(
-    expiryDate: Date,
-    totalDurationMs: number,
-  ): number {
-    const now = new Date();
-    const remaining = expiryDate.getTime() - now.getTime();
-    if (remaining <= 0) return 0;
-    return Math.min(100, (remaining / totalDurationMs) * 100);
-  }
-
-  function formatRemainingTime(expiryDate: Date): string {
-    const now = new Date();
-    const remaining = Math.max(0, expiryDate.getTime() - now.getTime());
-    const minutes = Math.floor(remaining / 60000);
-    const seconds = Math.ceil((remaining % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  }
-
   return (
     <div
       ref={containerRef}
@@ -79,27 +61,12 @@ export function DynamicQRCode({
           />
         </div>
         {codeExpiry && (
-          <div
-            className={`${layout === "row" ? "w-40" : "w-32"} aspect-square`}
-          >
-            <CircularProgressbar
-              value={getRemainingTimePercentage(
-                codeExpiry,
-                expirationSeconds * 1000,
-              )}
-              text={formatRemainingTime(codeExpiry)}
-              styles={buildStyles({
-                textSize: "20px",
-                pathColor: isFlashing
-                  ? "rgb(239, 68, 68)"
-                  : "hsl(var(--primary))",
-                textColor: isFlashing ? "rgb(239, 68, 68)" : "currentColor",
-                trailColor: "hsl(var(--muted))",
-                strokeLinecap: "round",
-                pathTransitionDuration: 0.5,
-              })}
-            />
-          </div>
+          <CircularTimer
+            expiryDate={codeExpiry}
+            totalDurationMs={expirationSeconds * 1000}
+            isFlashing={isFlashing}
+            size={layout === "row" ? "lg" : "sm"}
+          />
         )}
       </div>
     </div>
