@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -16,7 +16,6 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { useState } from "react";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -24,10 +23,10 @@ export default function Home() {
   const [code, setCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code.length !== 6) return;
+  const handleSubmit = async (value: string) => {
+    if (value.length !== 6) return;
 
     setIsValidating(true);
     setError(null);
@@ -36,12 +35,19 @@ export default function Home() {
       const res = await fetch(`/api/attendance/validate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code: value }),
       });
 
       if (!res.ok) {
         const data = await res.json();
         setError(data.error || "Invalid code");
+        setIsValidating(false);
+        const input = containerRef.current?.querySelector(
+          "input:not([disabled])",
+        ) as HTMLInputElement | null;
+        if (input) {
+          input.focus();
+        }
         return;
       }
 
@@ -49,8 +55,23 @@ export default function Home() {
     } catch (error) {
       console.error(error);
       setError("Something went wrong. Please try again.");
-    } finally {
       setIsValidating(false);
+      const input = containerRef.current?.querySelector(
+        "input:not([disabled])",
+      ) as HTMLInputElement | null;
+      if (input) {
+        input.focus();
+      }
+    }
+  };
+
+  const handleCodeChange = (value: string) => {
+    setCode(value);
+    if (value.length === 6) {
+      handleSubmit(value);
+    } else {
+      setIsValidating(false);
+      setError(null);
     }
   };
 
@@ -60,6 +81,17 @@ export default function Home() {
       router.push("/admin");
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    if (error) {
+      const input = containerRef.current?.querySelector(
+        "input:not([disabled])",
+      ) as HTMLInputElement | null;
+      if (input) {
+        input.focus();
+      }
+    }
+  }, [error]);
 
   if (status === "loading") {
     return (
@@ -104,57 +136,53 @@ export default function Home() {
               </div>
               <Card>
                 <CardContent className="pt-6">
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-center">
-                        <InputOTP
-                          maxLength={6}
-                          value={code}
-                          onChange={setCode}
-                          disabled={isValidating}
-                          onPaste={(e) => e.preventDefault()}
-                        >
-                          <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
-                      </div>
-                      {error && (
-                        <p className="text-sm text-center text-destructive">
-                          {error}
-                        </p>
-                      )}
-                      <p className="text-xs text-center text-muted-foreground">
-                        Enter the 6-character code shown above the QR code
+                  <div className="space-y-2">
+                    <div
+                      className="flex items-center justify-center"
+                      ref={containerRef}
+                    >
+                      <InputOTP
+                        maxLength={6}
+                        value={code}
+                        onChange={handleCodeChange}
+                        onPaste={(e) => e.preventDefault()}
+                        disabled={isValidating && !error}
+                        autoFocus
+                        spellCheck={false}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                    {error && (
+                      <p className="text-sm text-center text-destructive">
+                        {error}
                       </p>
+                    )}
+                    <p className="text-xs text-center text-muted-foreground">
+                      Enter the 6-character code shown above the QR code
+                    </p>
+                    <div className="flex justify-center">
+                      {isValidating && <LoadingSpinner text="Validating..." />}
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        type="submit"
-                        className="flex-1"
-                        disabled={code.length !== 6 || isValidating}
-                      >
-                        {isValidating ? (
-                          <LoadingSpinner text="Validating..." />
-                        ) : (
-                          "Submit Code"
-                        )}
-                      </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => setCode("")}
                         disabled={isValidating}
+                        className="flex-1"
                       >
                         Clear
                       </Button>
                     </div>
-                  </form>
+                  </div>
                 </CardContent>
               </Card>
             </div>
