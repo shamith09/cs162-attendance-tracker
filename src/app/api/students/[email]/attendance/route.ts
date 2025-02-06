@@ -31,7 +31,6 @@ export async function GET(
       s.created_at as session_date,
       ar.timestamp
     FROM attendance_records ar
-    JOIN attendance_codes ac ON ar.code_id = ac.id
     JOIN sessions s ON ar.session_id = s.id
     JOIN users u ON ar.user_id = u.id
     WHERE u.email = ?
