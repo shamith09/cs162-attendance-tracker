@@ -65,6 +65,7 @@ import {
 import { DynamicQRCode } from "@/components/DynamicQRCode";
 import { Badge } from "@/components/ui/badge";
 import { Toggle } from "@/components/ui/toggle";
+import { useToast } from "@/hooks/use-toast";
 
 interface Session {
   id: string;
@@ -133,6 +134,9 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [nameFilter, setNameFilter] = useState("");
   const [showMySessionsOnly, setShowMySessionsOnly] = useState(false);
+  const [isMarkingManual, setIsMarkingManual] = useState(false);
+  const [manualName, setManualName] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     if (status === "loading") return;
@@ -410,6 +414,50 @@ export default function AdminDashboard() {
     return matchesName && matchesCreator;
   });
 
+  const markManualAttendance = async () => {
+    if (!currentSession || !manualName) return;
+
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: currentSession.id,
+          name: manualName,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to mark attendance");
+      }
+
+      toast({
+        title: "Success",
+        description: "Attendance marked successfully",
+      });
+      setManualName("");
+      setIsMarkingManual(false);
+
+      // Refresh attendees list
+      const attendeesRes = await fetch(
+        "/api/attendance?sessionId=" + currentSession.id,
+      );
+      if (attendeesRes.ok) {
+        const attendeesData = await attendeesRes.json();
+        setAttendees(attendeesData.attendees);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to mark attendance",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   if (status === "loading" || !session?.user?.isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
@@ -484,7 +532,7 @@ export default function AdminDashboard() {
               Attendance Dashboard
             </h1>
           </div>
-          {currentSession && (
+          {currentSession ? (
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setIsFullscreen(true)}>
                 <Maximize2 className="h-4 w-4 mr-2" />
@@ -494,6 +542,8 @@ export default function AdminDashboard() {
                 End Session
               </Button>
             </div>
+          ) : (
+            <h2>{session?.user?.name}</h2>
           )}
         </div>
 
@@ -610,7 +660,12 @@ export default function AdminDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Current Attendees</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Current Attendees</CardTitle>
+                  <Button onClick={() => setIsMarkingManual(true)}>
+                    Mark Manually
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="h-[400px] overflow-hidden">
@@ -873,6 +928,34 @@ export default function AdminDashboard() {
               <Button variant="destructive" onClick={handleDelete}>
                 Delete
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isMarkingManual} onOpenChange={setIsMarkingManual}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Mark Manual Attendance</DialogTitle>
+              <DialogDescription>
+                Enter the student&apos;s name to mark them as present for this
+                session.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <Input
+                placeholder="Student name..."
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsMarkingManual(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={markManualAttendance}>Mark Present</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -27,11 +27,9 @@ CREATE TABLE IF NOT EXISTS attendance_codes (
 CREATE TABLE IF NOT EXISTS attendance_records (
   id VARCHAR(36) PRIMARY KEY,
   user_id VARCHAR(255) NOT NULL,
-  code_id VARCHAR(36) NOT NULL,
   session_id VARCHAR(36) NOT NULL,
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (code_id) REFERENCES attendance_codes(id),
   FOREIGN KEY (session_id) REFERENCES sessions(id)
 );
 
@@ -41,3 +39,10 @@ CREATE TABLE IF NOT EXISTS code_validations (
   expires_at TIMESTAMP NOT NULL,
   FOREIGN KEY (code_id) REFERENCES attendance_codes(id)
 );
+
+-- Add TTL index to automatically clean up old codes
+CREATE EVENT IF NOT EXISTS cleanup_old_codes
+ON SCHEDULE EVERY 1 HOUR
+DO
+  DELETE FROM attendance_codes 
+  WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR);

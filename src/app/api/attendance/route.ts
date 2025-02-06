@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Verify validation token
+    // Verify validation token and get session_id
     const [validationRows] = await pool.execute<RowDataPacket[]>(
       `SELECT cv.code_id, ac.session_id 
        FROM code_validations cv
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { code_id, session_id } = validationRows[0];
+    const { session_id } = validationRows[0];
 
     // Check if session is still active
     const [sessionRows] = await pool.execute<RowDataPacket[]>(
@@ -114,8 +114,8 @@ export async function POST(req: NextRequest) {
     try {
       await connection.beginTransaction();
       await connection.execute(
-        "INSERT INTO attendance_records (id, user_id, code_id, session_id, timestamp) VALUES (?, ?, ?, ?, NOW())",
-        [uuidv4(), userRows[0].id, code_id, session_id],
+        "INSERT INTO attendance_records (id, user_id, session_id, timestamp) VALUES (?, ?, ?, NOW())",
+        [uuidv4(), userRows[0].id, session_id],
       );
       await connection.execute("DELETE FROM code_validations WHERE id = ?", [
         validationToken,
@@ -138,5 +138,86 @@ export async function POST(req: NextRequest) {
       { error: "Failed to mark attendance" },
       { status: 500 },
     );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  const session = await getServerSession();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const [[user]] = await pool.execute<RowDataPacket[]>(
+    "SELECT is_admin FROM users WHERE email = ?",
+    [session.user.email],
+  );
+
+  if (!user?.is_admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { sessionId, name } = await req.json();
+
+  if (!sessionId || !name) {
+    return NextResponse.json(
+      { error: "Missing required fields" },
+      { status: 400 },
+    );
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    // Check if session exists and is active
+    const [[sessionData]] = await connection.execute<RowDataPacket[]>(
+      "SELECT id FROM sessions WHERE id = ? AND ended_at IS NULL",
+      [sessionId],
+    );
+
+    if (!sessionData) {
+      return NextResponse.json(
+        { error: "Invalid or ended session" },
+        { status: 400 },
+      );
+    }
+
+    // Find user by name
+    const [users] = await connection.execute<
+      (RowDataPacket & { id: string })[]
+    >("SELECT id FROM users WHERE name = ?", [name]);
+
+    let userId: string;
+    if (users.length === 0) {
+      // Create new user if not found
+      userId = uuidv4();
+      await connection.execute(
+        "INSERT INTO users (id, name, email, is_admin) VALUES (?, ?, ?, FALSE)",
+        [userId, name, ""],
+      );
+    } else {
+      userId = users[0].id;
+    }
+
+    // Check if already marked attendance
+    const [attendanceRows] = await connection.execute<RowDataPacket[]>(
+      "SELECT id FROM attendance_records WHERE user_id = ? AND session_id = ?",
+      [userId, sessionId],
+    );
+
+    if (attendanceRows.length > 0) {
+      return NextResponse.json(
+        { error: "Attendance already marked" },
+        { status: 400 },
+      );
+    }
+
+    // Mark attendance directly without creating a code
+    await connection.execute(
+      "INSERT INTO attendance_records (id, user_id, session_id, timestamp) VALUES (?, ?, ?, NOW())",
+      [uuidv4(), userId, sessionId],
+    );
+
+    return NextResponse.json({ success: true });
+  } finally {
+    connection.release();
   }
 }

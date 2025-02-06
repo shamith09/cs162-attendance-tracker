@@ -18,6 +18,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Admin {
   email: string;
@@ -31,8 +39,36 @@ export function AdminManagement() {
   const [filter, setFilter] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminName, setNewAdminName] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [adminToRemove, setAdminToRemove] = useState<Admin | null>(null);
   const { toast } = useToast();
   const { data: session } = useSession();
+
+  // Email validation regex
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@(berkeley\.edu|.*\.berkeley\.edu)$/;
+
+  const validateEmail = (email: string) => {
+    if (!email) {
+      setEmailError("Email is required");
+      return false;
+    }
+    if (!emailRegex.test(email)) {
+      setEmailError("Must be a valid berkeley.edu email address");
+      return false;
+    }
+    setEmailError(null);
+    return true;
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    setNewAdminEmail(email);
+    if (email) {
+      validateEmail(email);
+    } else {
+      setEmailError(null);
+    }
+  };
 
   const fetchAdmins = useCallback(async () => {
     try {
@@ -65,7 +101,8 @@ export function AdminManagement() {
   }, [filter, admins]);
 
   const addAdmin = async () => {
-    if (!newAdminEmail) return;
+    if (!validateEmail(newAdminEmail)) return;
+
     try {
       const res = await fetch("/api/admins", {
         method: "POST",
@@ -82,6 +119,7 @@ export function AdminManagement() {
       });
       setNewAdminEmail("");
       setNewAdminName("");
+      setEmailError(null);
       fetchAdmins();
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -109,6 +147,7 @@ export function AdminManagement() {
         title: "Success",
         description: "Admin removed successfully",
       });
+      setAdminToRemove(null);
       fetchAdmins();
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -122,74 +161,115 @@ export function AdminManagement() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Admin Management</CardTitle>
-        <CardDescription>
-          Manage who has administrative access to the system
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex justify-between gap-4">
-            <Input
-              placeholder="Filter by name or email..."
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="max-w-sm"
-            />
-            <div className="flex gap-2">
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Admin Management</CardTitle>
+          <CardDescription>
+            Manage who has administrative access to the system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between gap-4">
               <Input
-                placeholder="Email..."
-                value={newAdminEmail}
-                onChange={(e) => setNewAdminEmail(e.target.value)}
+                placeholder="Filter by name or email..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
                 className="max-w-sm"
               />
-              <Input
-                placeholder="Name (optional)..."
-                value={newAdminName}
-                onChange={(e) => setNewAdminName(e.target.value)}
-                className="max-w-sm"
-              />
-              <Button onClick={addAdmin}>Add</Button>
-            </div>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Sessions Started</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAdmins.map((admin) => (
-                <TableRow key={admin.email}>
-                  <TableCell>{admin.name || "N/A"}</TableCell>
-                  <TableCell>{admin.email}</TableCell>
-                  <TableCell>{admin.sessions_started}</TableCell>
-                  <TableCell>
-                    {admin.email !== session?.user?.email ? (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeAdmin(admin.email)}
-                      >
-                        Remove
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" disabled>
-                        Remove
-                      </Button>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      placeholder="Email..."
+                      value={newAdminEmail}
+                      onChange={handleEmailChange}
+                      className={`max-w-sm ${emailError ? "border-red-500" : ""}`}
+                    />
+                    {emailError && (
+                      <span className="text-xs text-red-500">{emailError}</span>
                     )}
-                  </TableCell>
+                  </div>
+                  <Input
+                    placeholder="Name (optional)..."
+                    value={newAdminName}
+                    onChange={(e) => setNewAdminName(e.target.value)}
+                    className="max-w-sm"
+                  />
+                  <Button onClick={addAdmin} disabled={!!emailError}>
+                    Add
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Only berkeley.edu email addresses are allowed
+                </p>
+              </div>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Sessions Started</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredAdmins.map((admin) => (
+                  <TableRow key={admin.email}>
+                    <TableCell>{admin.name || "N/A"}</TableCell>
+                    <TableCell>{admin.email}</TableCell>
+                    <TableCell>{admin.sessions_started}</TableCell>
+                    <TableCell>
+                      {admin.email !== session?.user?.email ? (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setAdminToRemove(admin)}
+                        >
+                          Remove
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" disabled>
+                          Remove
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={!!adminToRemove}
+        onOpenChange={() => setAdminToRemove(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Admin Access</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove admin access from{" "}
+              {adminToRemove?.name || adminToRemove?.email}? This action can be
+              undone by adding them back as an admin.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdminToRemove(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => adminToRemove && removeAdmin(adminToRemove.email)}
+            >
+              Remove Access
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
