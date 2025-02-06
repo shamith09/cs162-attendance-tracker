@@ -193,9 +193,6 @@ export function AdminManagement() {
                       onChange={handleEmailChange}
                       className={`max-w-sm ${emailError ? "border-red-500" : ""}`}
                     />
-                    {emailError && (
-                      <span className="text-xs text-red-500">{emailError}</span>
-                    )}
                   </div>
                   <Input
                     placeholder="Name (optional)..."
