@@ -3,7 +3,6 @@
 import { useEffect, useState, use } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -104,7 +103,6 @@ export default function StudentDetails({
 
   return (
     <div className="min-h-screen bg-background">
-      <ThemeToggle />
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Breadcrumb>
           <BreadcrumbList>
