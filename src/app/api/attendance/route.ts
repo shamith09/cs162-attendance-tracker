@@ -190,8 +190,8 @@ export async function PUT(req: NextRequest) {
       // Create new user if not found
       userId = uuidv4();
       await connection.execute(
-        "INSERT INTO users (id, name, email, is_admin) VALUES (?, ?, ?, FALSE)",
-        [userId, name, ""],
+        "INSERT INTO users (id, name, email, is_admin) VALUES (?, ?, UUID(), FALSE)",
+        [userId, name],
       );
     } else {
       userId = users[0].id;

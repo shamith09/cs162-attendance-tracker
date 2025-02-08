@@ -37,6 +37,7 @@ export async function GET(
     ORDER BY ar.timestamp DESC
   `,
     [email],
+    att,
   );
 
   // Get total sessions
