@@ -187,7 +187,7 @@ export default function SessionDetails({
           <div className="flex gap-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Student
                 </Button>
