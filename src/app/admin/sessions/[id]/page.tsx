@@ -23,7 +23,18 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Home } from "lucide-react";
+import { Home, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface Session {
   id: string;
@@ -50,6 +61,8 @@ export default function SessionDetails({
   const [sessionData, setSessionData] = useState<Session | null>(null);
   const [attendees, setAttendees] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [studentName, setStudentName] = useState("");
 
   useEffect(() => {
     if (status === "loading") return;
@@ -85,6 +98,36 @@ export default function SessionDetails({
 
     fetchSessionData();
   }, [id, session, status, router]);
+
+  const handleAddStudent = async () => {
+    if (!studentName.trim()) return;
+
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: id, name: studentName }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to add student");
+      }
+
+      // Refresh attendees list
+      const attendeesRes = await fetch(`/api/attendance?sessionId=${id}`);
+      const attendeesData = await attendeesRes.json();
+      setAttendees(attendeesData.attendees);
+      setStudentName("");
+      setIsDialogOpen(false);
+      toast.success("Student added successfully");
+    } catch (error) {
+      console.error("Error adding student:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add student",
+      );
+    }
+  };
 
   if (status === "loading" || loading) {
     return (
@@ -141,9 +184,41 @@ export default function SessionDetails({
               </p>
             </div>
           </div>
-          <Button variant="outline" onClick={() => router.push("/admin")}>
-            Back to Dashboard
-          </Button>
+          <div className="flex gap-2">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Student
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Student Manually</DialogTitle>
+                  <DialogDescription>
+                    Enter the student&apos;s name to add them to this session.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Student Name</Label>
+                    <Input
+                      id="name"
+                      value={studentName}
+                      onChange={(e) => setStudentName(e.target.value)}
+                      placeholder="Enter student name"
+                    />
+                  </div>
+                  <Button onClick={handleAddStudent} className="w-full">
+                    Add Student
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button variant="outline" onClick={() => router.push("/admin")}>
+              Back to Dashboard
+            </Button>
+          </div>
         </div>
 
         <Card>

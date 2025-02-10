@@ -167,17 +167,14 @@ export async function PUT(req: NextRequest) {
 
   const connection = await pool.getConnection();
   try {
-    // Check if session exists and is active
+    // Check if session exists (removed the active check)
     const [[sessionData]] = await connection.execute<RowDataPacket[]>(
-      "SELECT id FROM sessions WHERE id = ? AND ended_at IS NULL",
+      "SELECT id FROM sessions WHERE id = ?",
       [sessionId],
     );
 
     if (!sessionData) {
-      return NextResponse.json(
-        { error: "Invalid or ended session" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
     // Find user by name
