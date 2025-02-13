@@ -8,6 +8,14 @@ interface AttendeeRecord extends RowDataPacket {
   user_name: string;
   user_email: string;
   timestamp: string;
+  is_excused: boolean;
+}
+
+// Function to format name to first and last only
+function formatName(fullName: string): string {
+  const names = fullName.trim().split(/\s+/);
+  if (names.length <= 2) return fullName.trim();
+  return `${names[0]} ${names[names.length - 1]}`;
 }
 
 export async function GET(req: NextRequest) {
@@ -33,7 +41,7 @@ export async function GET(req: NextRequest) {
   }
 
   const [attendees] = await pool.execute<AttendeeRecord[]>(
-    `SELECT u.name as user_name, u.email as user_email, ar.timestamp 
+    `SELECT u.name as user_name, u.email as user_email, ar.timestamp, ar.is_excused
      FROM attendance_records ar 
      JOIN users u ON ar.user_id = u.id 
      WHERE ar.session_id = ? 
@@ -86,10 +94,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Session ended" }, { status: 400 });
     }
 
-    // Get user ID from email
+    // Get user ID from email, also check for matching name
     const [userRows] = await pool.execute<(RowDataPacket & { id: string })[]>(
-      "SELECT id FROM users WHERE email = ?",
-      [session.user.email],
+      `SELECT u1.id 
+       FROM users u1 
+       LEFT JOIN users u2 ON u1.name = u2.name AND u2.email IS NULL
+       WHERE u1.email = ? OR (u1.email IS NULL AND u1.name = (SELECT name FROM users WHERE email = ?))
+       ORDER BY u1.email IS NOT NULL DESC 
+       LIMIT 1`,
+      [session.user.email, session.user.email],
     );
 
     if (userRows.length === 0) {
@@ -120,6 +133,13 @@ export async function POST(req: NextRequest) {
       await connection.execute("DELETE FROM code_validations WHERE id = ?", [
         validationToken,
       ]);
+
+      // Update the user's email if it was null
+      await connection.execute(
+        "UPDATE users SET email = ? WHERE id = ? AND email IS NULL",
+        [session.user.email, userRows[0].id],
+      );
+
       await connection.commit();
     } catch (error) {
       await connection.rollback();
@@ -177,18 +197,21 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
+    // Format name before searching/creating user
+    const formattedName = formatName(name);
+
     // Find user by name
     const [users] = await connection.execute<
       (RowDataPacket & { id: string })[]
-    >("SELECT id FROM users WHERE name = ?", [name]);
+    >("SELECT id FROM users WHERE name = ?", [formattedName]);
 
     let userId: string;
     if (users.length === 0) {
       // Create new user if not found
       userId = uuidv4();
       await connection.execute(
-        "INSERT INTO users (id, name, email, is_admin) VALUES (?, ?, UUID(), FALSE)",
-        [userId, name],
+        "INSERT INTO users (id, name, email, is_admin) VALUES (?, ?, NULL, FALSE)",
+        [userId, formattedName],
       );
     } else {
       userId = users[0].id;

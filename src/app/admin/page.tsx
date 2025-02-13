@@ -31,10 +31,11 @@ import {
   Home,
   Trash2,
   X,
-  Maximize2,
   Eye,
   StopCircle,
   Check,
+  History,
+  Pencil,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -66,6 +67,14 @@ import { Badge } from "@/components/ui/badge";
 import { Toggle } from "@/components/ui/toggle";
 import { useToast } from "@/hooks/use-toast";
 import { CircularTimer } from "@/components/CircularTimer";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Session {
   id: string;
@@ -90,9 +99,17 @@ interface Analytics {
   attendanceOverTime: { name: string; attendance: number }[];
 }
 
+interface RecurringSession {
+  id: string;
+  name: string;
+  created_at: string;
+  student_count: number;
+}
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { toast } = useToast();
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [sessionName, setSessionName] = useState("");
   const [expirationValue, setExpirationValue] = useState(10);
@@ -118,7 +135,11 @@ export default function AdminDashboard() {
   const [showMySessionsOnly, setShowMySessionsOnly] = useState(false);
   const [isMarkingManual, setIsMarkingManual] = useState(false);
   const [manualName, setManualName] = useState("");
-  const { toast } = useToast();
+  const [selectedRecurringSession, setSelectedRecurringSession] =
+    useState<RecurringSession | null>(null);
+  const [recurringSessions, setRecurringSessions] = useState<
+    RecurringSession[]
+  >([]);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -219,15 +240,13 @@ export default function AdminDashboard() {
         const data = await res.json();
         setPastSessions(data.sessions || []);
 
-        // Find any active session created by current admin (no ended_at date)
+        // Find the most recent active session created by the current user
         const activeSession = data.sessions?.find(
           (s: Session) =>
             !s.ended_at && s.creator_email === session?.user?.email,
         );
-        if (activeSession) {
+        if (activeSession && !currentSession) {
           setCurrentSession(activeSession);
-        } else {
-          setCurrentSession(null);
         }
       } catch (error) {
         console.error("Error fetching sessions:", error);
@@ -235,7 +254,7 @@ export default function AdminDashboard() {
       }
     };
     fetchSessions();
-  }, [session]);
+  }, [session, currentSession]);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -252,49 +271,20 @@ export default function AdminDashboard() {
     fetchAnalytics();
   }, [pastSessions]);
 
-  const startSession = async () => {
-    if (!sessionName) return;
-    let expirationSeconds;
-    switch (expirationUnit) {
-      case "seconds":
-        expirationSeconds = expirationValue;
-        break;
-      case "minutes":
-        expirationSeconds = expirationValue * 60;
-        break;
-      case "hours":
-        expirationSeconds = expirationValue * 60 * 60;
-        break;
-    }
-
-    if (isNaN(expirationSeconds) || expirationSeconds <= 0) return;
-
-    try {
-      await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: sessionName,
-          expirationSeconds: Number(expirationSeconds),
-        }),
-      });
-
-      // Fetch fresh session data to get creator info
-      const sessionsRes = await fetch("/api/sessions");
-      const { sessions } = await sessionsRes.json();
-      setPastSessions(sessions);
-
-      // Find and set the current session
-      const newSession = sessions.find((s: Session) => !s.ended_at);
-      if (newSession) {
-        setCurrentSession(newSession);
+  useEffect(() => {
+    const fetchRecurringSessions = async () => {
+      try {
+        const res = await fetch("/api/recurring-sessions");
+        if (res.ok) {
+          const data = await res.json();
+          setRecurringSessions(data.sessions || []);
+        }
+      } catch (error) {
+        console.error("Error fetching recurring sessions:", error);
       }
-
-      setSessionName("");
-    } catch (error) {
-      console.error("Error starting session:", error);
-    }
-  };
+    };
+    fetchRecurringSessions();
+  }, []);
 
   const endSession = async () => {
     if (!currentSession) return;
@@ -345,21 +335,42 @@ export default function AdminDashboard() {
     if (!renameSession) return;
     try {
       const res = await fetch(`/api/sessions/${renameSession.id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: renameSession.name }),
       });
-      if (res.ok) {
-        setPastSessions((sessions) =>
-          sessions.map((s) =>
-            s.id === renameSession.id ? { ...s, name: renameSession.name } : s,
-          ),
-        );
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to rename session");
       }
+
+      const updatedSession = await res.json();
+      setPastSessions((sessions) =>
+        sessions.map((s) =>
+          s.id === renameSession.id ? { ...s, name: renameSession.name } : s,
+        ),
+      );
+
+      // Update current session if it's being renamed
+      if (currentSession?.id === renameSession.id) {
+        setCurrentSession(updatedSession);
+      }
+
+      setRenameSession(null);
+      toast({
+        title: "Success",
+        description: "Session renamed successfully",
+      });
     } catch (error) {
       console.error("Error renaming session:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to rename session",
+        variant: "destructive",
+      });
     }
-    setRenameSession(null);
   };
 
   const handleDelete = async () => {
@@ -440,6 +451,86 @@ export default function AdminDashboard() {
     }
   };
 
+  const startSession = async () => {
+    if (!sessionName.trim()) return;
+
+    try {
+      const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: sessionName,
+          expirationSeconds:
+            expirationValue *
+            (expirationUnit === "hours"
+              ? 3600
+              : expirationUnit === "minutes"
+                ? 60
+                : 1),
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to start session");
+      }
+
+      const newSession = await res.json();
+      setSessionName("");
+      setCurrentSession(newSession);
+      // Refresh sessions list
+      const sessionsRes = await fetch("/api/sessions");
+      const { sessions } = await sessionsRes.json();
+      setPastSessions(sessions);
+    } catch (error) {
+      console.error("Error starting session:", error);
+      if (error instanceof Error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to start session",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const startRecurringSession = async (recurringSession: RecurringSession) => {
+    try {
+      const res = await fetch(
+        `/api/recurring-sessions/${recurringSession.id}/start`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: recurringSession.name,
+            expirationSeconds:
+              expirationValue *
+              (expirationUnit === "hours"
+                ? 3600
+                : expirationUnit === "minutes"
+                  ? 60
+                  : 1),
+          }),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to start session");
+      const newSession = await res.json();
+      setCurrentSession(newSession);
+      // Refresh sessions list
+      const sessionsRes = await fetch("/api/sessions");
+      const { sessions } = await sessionsRes.json();
+      setPastSessions(sessions);
+    } catch (error) {
+      console.error("Error starting session:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to start session",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (status === "loading" || !session?.user?.isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
@@ -511,22 +602,24 @@ export default function AdminDashboard() {
               className="h-10 w-auto"
             />
             <h1 className="text-2xl font-bold text-foreground">
-              Attendance Dashboard
+              Admin Dashboard
             </h1>
           </div>
-          {currentSession ? (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsFullscreen(true)}>
-                <Maximize2 className="h-4 w-4 mr-2" />
-                Fullscreen
-              </Button>
+          <div className="flex gap-2">
+            {currentSession && (
               <Button variant="destructive" onClick={endSession}>
+                <StopCircle className="h-4 w-4 mr-2" />
                 End Session
               </Button>
-            </div>
-          ) : (
-            <h2>{session?.user?.name}</h2>
-          )}
+            )}
+            <Button
+              variant="outline"
+              onClick={() => router.push("/admin/recurring-sessions")}
+            >
+              <History className="h-4 w-4 mr-2" />
+              Recurring Sessions
+            </Button>
+          </div>
         </div>
 
         {!currentSession ? (
@@ -565,19 +658,59 @@ export default function AdminDashboard() {
                       }
                       className="w-20"
                     />
-                    <select
+                    <Select
                       value={expirationUnit}
-                      onChange={(e) =>
+                      onValueChange={(value) =>
                         setExpirationUnit(
-                          e.target.value as "seconds" | "minutes" | "hours",
+                          value as "seconds" | "minutes" | "hours",
                         )
                       }
-                      className="px-2 py-1.5 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                     >
-                      <option value="seconds">seconds</option>
-                      <option value="minutes">minutes</option>
-                      <option value="hours">hours</option>
-                    </select>
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="seconds">seconds</SelectItem>
+                        <SelectItem value="minutes">minutes</SelectItem>
+                        <SelectItem value="hours">hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="border-t pt-4">
+                  <Label className="text-sm text-muted-foreground mb-2 block">
+                    Or start from recurring session:
+                  </Label>
+                  <div className="flex gap-3">
+                    <Select
+                      value={selectedRecurringSession?.id || ""}
+                      onValueChange={(value) => {
+                        const session = recurringSessions.find(
+                          (s) => s.id === value,
+                        );
+                        setSelectedRecurringSession(session || null);
+                      }}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select a recurring session" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {recurringSessions.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedRecurringSession && (
+                      <Button
+                        onClick={() =>
+                          startRecurringSession(selectedRecurringSession)
+                        }
+                      >
+                        Start
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -587,7 +720,23 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 gap-6 mb-8">
             <Card>
               <CardHeader>
-                <CardTitle>{currentSession.name}</CardTitle>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <CardTitle>{currentSession.name}</CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setRenameSession({
+                          id: currentSession.id,
+                          name: currentSession.name,
+                        });
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="bg-card p-4 rounded-md space-y-8">
@@ -712,9 +861,9 @@ export default function AdminDashboard() {
                     </TableCell>
                     <TableCell>
                       {s.ended_at ? (
-                        <Badge variant="outline">Ended</Badge>
+                        <Badge variant="destructive">Ended</Badge>
                       ) : (
-                        <Badge>Active</Badge>
+                        <Badge variant="success">Active</Badge>
                       )}
                     </TableCell>
                     <TableCell>
