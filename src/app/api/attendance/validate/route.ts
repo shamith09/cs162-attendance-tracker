@@ -75,8 +75,8 @@ export async function POST(req: Request) {
 
       // Mark attendance
       await connection.execute(
-        "INSERT INTO attendance_records (id, user_id, code_id, session_id, timestamp) VALUES (?, ?, ?, ?, NOW())",
-        [uuidv4(), user.id, codeRows[0].id, codeRows[0].session_id],
+        "INSERT INTO attendance_records (id, user_id, session_id, timestamp) VALUES (?, ?, ?, NOW())",
+        [uuidv4(), user.id, codeRows[0].session_id],
       );
 
       return NextResponse.json({ success: true });
