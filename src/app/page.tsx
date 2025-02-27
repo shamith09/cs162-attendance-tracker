@@ -132,6 +132,8 @@ export default function Home() {
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Scan the QR code shown in class or enter the code below.
+                  <br />
+                  The code is not case sensitive.
                 </p>
               </div>
               <Card>
